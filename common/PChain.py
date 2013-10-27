@@ -19,7 +19,7 @@ import glob
 import os
 
 
-def generateDictionaries1():
+def generateDictionaries():
 	cwd = os.getcwd()
 	if not os.path.exists('dictionaries'): os.mkdir('dictionaries')
 	os.chdir('dictionaries')
@@ -27,35 +27,9 @@ def generateDictionaries1():
 	gInterpreter.GenerateDictionary("std::vector<std::vector<int> >","vector");
 	gInterpreter.GenerateDictionary("std::vector<std::vector<unsigned int> >","vector");
 	os.chdir(cwd)
-	#for f in glob.glob('./AutoDict*'): os.remove(f)
 	
-def generateDictionaries2():
-	with open('Loader.C','w') as f:
-		f.write(\
-			"""#include <vector>
-#ifdef __CINT__
-#pragma link C++ class vector<vector<bool> >; 	
-#pragma link C++ class vector<vector<int> >; 
-#pragma link C++ class vector<vector<double> >; 
-#pragma link C++ class vector<vector<string> >; 
-#pragma link C++ class vector<vector<unsigned int> >; 
-#pragma link C++ class vector<vector<float> >;
-#else
-template class C++ class vector<vector<bool> >; 	
-template class C++ class vector<vector<int> >; 
-template class C++ class vector<vector<double> >; 
-template class C++ class vector<vector<string> >; 
-template class C++ class vector<vector<unsigned int> >; 
-template class C++ class vector<vector<float> >;
-#endif""")
+generateDictionaries()
 
-	ROOT.gROOT.ProcessLine('.L Loader.C+')
-	#for f in ['Loader.C','Loader_C.so','Loader_C.d']: os.remove(f)
-
-print 'Generating dictionaries'
-generateDictionaries1()
-print 'Done...'
-#generateDictionaries2()
 
 class PChain():
 

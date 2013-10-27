@@ -1,5 +1,6 @@
 from xml.dom.minidom import parseString
 from common.EventFunction import EventFunction, ResultFunction
+import ROOT
 
 #Good run list parser
 def parseGoodRunListXML(goodRunListXML):
