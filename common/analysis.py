@@ -1,4 +1,5 @@
 import ROOT
+ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 3001;")
 from PChain import PChain
 import sys
 import os
@@ -14,6 +15,8 @@ import code
 import string
 import random
 from standard import inGRL, skim, cutflow, computeMCEventWeight
+from math import log
+
 #Patches stdout to pipe to a Queue which will handle logging
 class logpatch():
 	def __init__(self,Queue):
@@ -25,7 +28,6 @@ class logpatch():
 	def write(self,x):
 		if x and x != '\n': self.queue.put(x)
 
-
 def Analyze(analysis,entryRange,resultQueue,errorQueue,loggerQueue,processNumber,processes,directory):
 
 	error = None
@@ -35,19 +37,20 @@ def Analyze(analysis,entryRange,resultQueue,errorQueue,loggerQueue,processNumber
 		#output name will be None if there is some problem
 		resultQueue.put(outputName)
 		#error will be None if there is NO problem
-		errorQueue.put(error)
+		if error: errorQueue.put(error)
 		sys.exit()
 
 	#print statements executed in here and in Event/Result functions are redirected to the main logger
-	sys.stdout = patch(loggerQueue)
+	sys.stdout = logpatch(loggerQueue)
+
+	#Create output
+	if processes>1: outputName = '{directory}/temp_{0:0>{1}}.root'.format(processNumber,int(log(processes-1,10))+1,directory=directory)
+	else: outputName = '{directory}/temp.root'.format(directory=directory)
+	output = ROOT.TFile(outputName,'RECREATE')
+	output.cd()
 	
 	#Create local copy of analysis
 	analysis = analysis.__copy__()
-
-	#Create output
-	outputName = '{directory}/temp_{0:0>{1}}.root'.format(processNumber,int(log(processes-1,10))+1,directory=directory)
-	output = ROOT.TFile(outputName,'RECREATE')
-	output.cd()
 
 	try:
 		analysis.AddStandardFunctions()
@@ -57,8 +60,9 @@ def Analyze(analysis,entryRange,resultQueue,errorQueue,loggerQueue,processNumber
 	except Exception:
 		error = 'Error occured in initialization\n'+traceback.format_exc()
 		outputName = None
-	finally:
 		cleanup()
+
+	milestone = 0.
 
 	start,end = entryRange
 	timeStart = time()
@@ -84,14 +88,16 @@ def Analyze(analysis,entryRange,resultQueue,errorQueue,loggerQueue,processNumber
 				resultFunction(event)
 
 			rate = (entry-start)/(time()-timeStart)
-			percent = (entry-start+1)/(end-start)
+			percentDone = float(entry-start+1)/(end-start)*100.
 		
-			if (entry-start+1)%10:
-				print 'Process number {0}: {1}% complete, {2} Hz'.format(processNumber,percentDone,rate)
+			if percentDone>milestone:
+				milestone+=10.
+				print 'Process number {0}: {1}% complete, {2} Hz'.format(processNumber,round(percentDone,2),round(rate,2))
+
+
 	except Exception:
 		error = 'Exception caught in entry {0}\n'.format(entry)+traceback.format_exc()
 		outputName = None
-	finally:
 		cleanup()
 
 	#Handle results
@@ -102,22 +108,25 @@ def Analyze(analysis,entryRange,resultQueue,errorQueue,loggerQueue,processNumber
 				#Write result function items to output
 				v.Write()
 
-		for metaResultFunction in analysis.__MetaResultFunctions__:
-			#Call meta-result function
-			metaResultFunction(analysis.__files__)
-			for v in metaResultFunction.items.values():
-				output.cd()
-				#Write meta-result function items to output
-				v.Write()
+		#Only process meta-results for first process
+		if not processNumber: 
+			for metaResultFunction in analysis.__MetaResultFunctions__:
+				#Call meta-result function
+				metaResultFunction(analysis.__files__)
+				for v in metaResultFunction.items.values():
+					output.cd()
+					#Write meta-result function items to output
+					v.Write()
 
 	except Exception:
 		error = 'Exception caught while handling results\n'+traceback.format_exc()
 		outputName = None
-	finally:
 		cleanup()	
 
-	cleanup()
+	print 'Process number {0}: {1}% complete, {2} Hz'.format(processNumber, round(percentDone,2), round(rate,2))	
+	print 'Process number {0}: Sending output {1}'.format(processNumber, outputName)
 
+	cleanup()
 
 #Base analysis class
 class analysis():
@@ -208,6 +217,7 @@ class analysis():
 
 	def __call__(self):
 
+
 		#Setup chain to catch any obvious problems
 		self.SetupChain()
 
@@ -220,17 +230,19 @@ class analysis():
 		resultQueue = Queue()
 		errorQueue = Queue()
 		loggerQueue = Queue()
-		
+
+
 		#Create temp directory
 		while True:
 			directory = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
 			if directory not in os.listdir('.'):
 				os.mkdir(directory)
 				break
+		print 'Created temporary directory {0}'.format(directory)
 
 		#Instantiate and start processes
 		ranges = [[i*(entries/self.__processes__),(i+1)*(entries/self.__processes__)] for i in range(self.__processes__)]; ranges[-1][-1]+=entries%(self.__processes__)
-		processes = [Process(target = self.Analyze, args = (
+		processes = [Process(target = Analyze, args = (
 				self,
 				ranges[i],
 				resultQueue,
@@ -239,37 +251,30 @@ class analysis():
 				i,
 				self.__processes__,
 				directory,
-				progress[i]
 				)) for i in range(self.__processes__)]
 
 		for process in processes: process.start()
-
+		print '{0} processes started'.format(self.__processes__)
 
 		def cleanup():
+			#import code; code.interact(local=locals())
 			for process in processes: 
 				process.terminate()
 				process.join()
 			if os.path.exists(directory): shutil.rmtree(directory)		
 			sys.exit()
 
-		#Wait for processes to complete or kill them if ctrl-c		
+		#Wait for processes to complete or kill them if ctrl-c
 		finished = 0
-		looped = 0
-		timeStart = time()
-
 		while 1:
 			try: sleep(0.1)
-			except KeyboardInterrupt:
-				pass
-			finally: 
-				cleanup()
-				for process in processes: process.terminate()
-				sys.exit()
+			except KeyboardInterrupt: cleanup()
 
 			#flush logger queue
 			while not loggerQueue.empty():
 				print loggerQueue.get()
 
+			#flush error queue
 			while not errorQueue.empty():
 				print errorQueue.get()
 				cleanup()
@@ -277,14 +282,18 @@ class analysis():
 			#flush result queue
 			while not resultQueue.empty():
 				finished+=1
-				#flush logger
-				while not loggerQueue.empty(): print loggerQueue.get()
-				self.__result__.append(queue.get())
-				print '{0}/{1} finished'.format(finished,self.__processes__)
+				#flush logger queue
+				while not loggerQueue.empty():
+					print loggerQueue.get()
+				#flush error queue
+				while not errorQueue.empty():
+					print errorQueue.get()
+					cleanup()
+				self.__result__.append(resultQueue.get())
 
 			if finished==self.__processes__: break		
-		
-		
+
+
 		#Create path to output and output ROOT file, merge results
 		mkpath(os.path.dirname(self.__output__))
 		

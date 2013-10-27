@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import os
+
 #=======================================================================================================
 
 def analyze(
@@ -16,9 +18,12 @@ def analyze(
 	):
 
 	__analysisModule__ = __analysisModule__.replace('/','.')[:-3]
-	
+
+	cwd = os.getcwd()
+	os.chdir('{home}/'.format(home=os.getenv('ANALYSISHOME')))	
 	analysis = __import__(__analysisModule__,globals(),locals(),[__analysisName__]).__dict__[__analysisName__](__keep__=__keep__)
-	
+	os.chdir(cwd)
+
 	analysis.AddInput(*__input__)
 	analysis.SetTree(__tree__)
 	analysis.SetSkim(__skim__)

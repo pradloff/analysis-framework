@@ -9,7 +9,7 @@ import ROOT
 #import PyCintex
 #PyCintex.Cintex.Enable()
 from ROOT import gROOT, gInterpreter
-#gROOT.ProcessLine("gErrorIgnoreLevel = 2001;")
+gROOT.ProcessLine("gErrorIgnoreLevel = 2001;")
 import re
 from EventObject import EventObject
 from array import array
@@ -54,7 +54,7 @@ class PChain():
 		self.__items__ = {}
 
 		self.__files__ = []
-		self.__fileBranches__ = {}
+		self.__filesBranches__ = {}
 
 		self.__CurrentTreeNumber__ = -1
 
@@ -63,13 +63,14 @@ class PChain():
 
 	def AddFiles(self,*files):
 		for f in files: 
-			tree = getattr(f,self.__tree__,None)
+			tfile = ROOT.TFile(f)
+			tree = getattr(tfile,self.__tree__,None)
 			if any([
 				not tree,
 				not isinstance(tree,ROOT.TTree),
 				]): raise Exception,'No matches for TTree "{0}" in file {1}.'.format(self.__tree__,f)
 			self.__files__.append(f)
-			self.__fileBranches__[f] = [b.GetName() for b in tree.GetListOfBranches()]
+			self.__filesBranches__[f] = [b.GetName() for b in tree.GetListOfBranches()]
 			self.__chain__.Add(f)
 
 	def GetAvailableItems(self):
@@ -113,7 +114,7 @@ class PChain():
 		if self.__CurrentTreeNumber__ != num:
 			self.__CurrentTreeNumber__ = num
 			self.__branches__ = {}
-			for item in set(self.__itemNames__)&set(self.__fileBranches__[self._files__[self.__CurrentTreeNumber__]]):
+			for item in set(self.__itemNames__)&set(self.__filesBranches__[self.__files__[self.__CurrentTreeNumber__]]):
 				self.__branches__[item] = self.__chain__.GetBranch(item)
 		
 	def GetBranches(self,event,*items):
