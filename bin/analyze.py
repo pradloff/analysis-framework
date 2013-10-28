@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 
 import os
+import sys
+from common.analysis import analysis
+import traceback
 
 #=======================================================================================================
 
 def analyze(
-	__analysisModule__,
+	__analysisModuleName__,
 	__analysisName__,
 	__input__=[],
 	__output__='result.root',
@@ -17,22 +20,34 @@ def analyze(
 	__keep__=False,
 	):
 
-	__analysisModule__ = __analysisModule__.replace('/','.')[:-3]
-
 	cwd = os.getcwd()
-	os.chdir('{home}/'.format(home=os.getenv('ANALYSISHOME')))	
-	analysis = __import__(__analysisModule__,globals(),locals(),[__analysisName__]).__dict__[__analysisName__](__keep__=__keep__)
+	os.chdir('{home}'.format(home=os.getenv('ANALYSISHOME')))
+
+	if not os.path.exists(__analysisModuleName__):
+		print '$ANALYSISHOME/analyses/{0} not found'.format(__analysisModuleName__)
+		return 0
+	__analysisModule__ = '.'.join([part for part in __analysisModuleName__.split('/')]).rstrip('.py')
+	try:
+		analysis_ = __import__(__analysisModule__,globals(),locals(),[__analysisName__]).__dict__[__analysisName__](__keep__=__keep__)
+	except ImportError as e:
+		error = 'Problem importing {0} from $ANALYSISHOME/analyses/{1}\n'.format(__analysisName__,__analysisModuleName__)+traceback.format_exc()
+		print error
+		return 0	
+	if not isinstance(analysis_,analysis):
+		print '{0} is not an analysis instance'.format(analysis_)
+		return 0
+
 	os.chdir(cwd)
 
-	analysis.AddInput(*__input__)
-	analysis.SetTree(__tree__)
-	analysis.SetSkim(__skim__)
-	analysis.SetOutput(__output__)
-	analysis.SetGRL(__GRL__)
-	analysis.SetProcesses(__processes__)
-	analysis.SetVerbose(__verbose__)
+	analysis_.AddInput(*__input__)
+	analysis_.SetTree(__tree__)
+	analysis_.SetSkim(__skim__)
+	analysis_.SetOutput(__output__)
+	analysis_.SetGRL(__GRL__)
+	analysis_.SetProcesses(__processes__)
+	analysis_.SetVerbose(__verbose__)
 	
-	return analysis()
+	return analysis_()
 
 #=======================================================================================================
 
