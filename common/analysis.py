@@ -1,348 +1,722 @@
 import ROOT
-ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 3001;")
-from PChain import PChain
+from pchain import pchain, generate_dictionaries
 import sys
 import os
-import re
 import shutil
 import traceback
-from copy import copy, deepcopy
+from copy import copy
 from time import sleep, time
 from distutils.dir_util import mkpath
 from multiprocessing import Process, Queue
-from common.EventObject import EventObject
-import code
+from common.event import event_object
 import string
 import random
-from standard import inGRL, skim, cutflow, computeMCEventWeight
+from standard import in_grl, skim, cutflow, compute_mc_weight
 from math import log
+from common.external import call
+import stat   
 
 #Patches stdout to pipe to a Queue which will handle logging
 class logpatch():
-	def __init__(self,Queue):
-		self.queue=Queue
+	def __init__(self,queue,prefix,suffix):
+		self.queue=queue
+		self.prefix = prefix
+		self.suffix = suffix
+		self.buffer = ''
 
 	def flush(self):
 		pass
 
-	def write(self,x):
-		if x and x != '\n': self.queue.put(x)
+	def write(self,log):
+		if log != '\n':
+			self.buffer += log
+		else:
+			self.queue.put(self.prefix+self.buffer.replace('\n','\n'+' '*len(self.prefix)))
+			self.buffer = ''
 
-def Analyze(analysis,entryRange,resultQueue,errorQueue,loggerQueue,processNumber,processes,directory):
+#Patches stdout to a file
+class logpatch_file():
+	def __init__(self,output,prefix='',suffix=''):
+		self.output = output
+		self.prefix = prefix
+		self.suffix = suffix
+		self.buffer = ''
+
+	def flush(self):
+		self.output.flush()
+
+	def close(self):
+		self.output.flush()
+		self.output.close()
+
+	def write(self,log):
+		if log != '\n':
+			self.buffer += log
+		else:
+			self.output.write(self.prefix+self.buffer.replace('\n','\n'+' '*len(self.prefix))+'\n')
+			self.flush()
+			self.buffer = ''
+
+def analyze(
+	analysis_constructor,
+	tree,
+	grl,
+	files,
+	output,
+	entries=None,
+	num_processes=2
+	):
+
+	#generate default dictionaries needed by ROOT
+	generate_dictionaries()
+
+	print 'Setting up analysis'
+	print '-'*50+'\n'
+
+	#create initial analysis object to test for obvious problems
+	analysis_instance = analysis_constructor()
+	analysis_instance.tree = tree
+	analysis_instance.grl = grl
+	analysis_instance.add_file(*files)
+	analysis_instance.setup_chain()
+
+	print '\n'+'-'*50
+
+	if entries is not None:
+		entries = min([int(entries),analysis_instance.pchain.get_entries()])
+	else: entries = analysis_instance.pchain.get_entries()
+
+	if not entries: return 1
+
+	print 'Processing {0} entries with {1} processes'.format(entries,num_processes)
+	
+	#Result, error and log queue
+	result_queue = Queue()
+	error_queue = Queue()
+	logger_queue = Queue()
+
+	#Create temp directory
+	while True:
+		directory = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
+		if directory not in os.listdir('.'):
+			os.mkdir(directory)
+			break
+	print 'Created temporary directory {0}'.format(directory)
+
+	#Instantiate and start processes
+	ranges = [[i*(entries/num_processes),(i+1)*(entries/num_processes)] for i in range(num_processes)]; ranges[-1][-1]+=entries%(num_processes)
+
+	processes = [Process(target = analyze_slice, args = (
+			analysis_constructor,
+			tree,
+			grl,
+			files,
+			ranges,
+			process_number,
+			directory,
+			result_queue,
+			error_queue,
+			logger_queue,
+			)) for process_number in range(num_processes)]
+
+	time_start = time()
+	for process in processes: process.start()
+	print '{0} processes started'.format(num_processes)
+
+	def cleanup():
+		for process in processes: 
+			process.terminate()
+			process.join()
+		if os.path.exists(directory): shutil.rmtree(directory)		
+		sys.exit()
+
+	#Wait for processes to complete or kill them if ctrl-c
+	finished = 0
+	results = []
+	while 1:
+		try: sleep(0.1)
+		except KeyboardInterrupt: cleanup()
+
+		#flush logger queue
+		while not logger_queue.empty():
+			print logger_queue.get()
+
+		#flush error queue
+		while not error_queue.empty():
+			print error_queue.get()
+			cleanup()
+
+		#flush result queue
+		while not result_queue.empty():
+			finished+=1
+			#flush logger queue
+			while not logger_queue.empty():
+				print logger_queue.get()
+			#flush error queue
+			while not error_queue.empty():
+				print error_queue.get()
+				cleanup()
+			results.append(result_queue.get())
+
+		if finished==num_processes: break		
+
+	print 'Overall rate: {0} Hz'.format(round(entries/(time()-time_start),2))
+
+	#Create path to output and output ROOT file, merge results
+	mkpath(os.path.dirname(output))
+	os.close(sys.stdout.fileno())
+	if num_processes>1:
+		merger = ROOT.TFileMerger()
+		if os.path.exists(output): os.remove(output)
+		merger.OutputFile(output)
+		for result in results:
+			merger.AddFile(result)
+		merger.Merge()
+	else:
+		shutil.move(results[0], output)
+
+	cleanup()
+
+def analyze_slice(
+	analysis_constructor,
+	tree,
+	grl,
+	files,
+	ranges,
+	process_number,
+	directory,
+	result_queue,
+	error_queue,
+	logger_queue,
+	):
+
+	generate_dictionaries()
 
 	error = None
 	#cleanup function always called no matter form of exit
 	def cleanup():
 		output.Close()
 		#output name will be None if there is some problem
-		resultQueue.put(outputName)
+		result_queue.put(output_name)
 		#error will be None if there is NO problem
-		if error: errorQueue.put(error)
+		if error: error_queue.put(error)
 		sys.exit()
 
 	#print statements executed in here and in Event/Result functions are redirected to the main logger
-	sys.stdout = logpatch(loggerQueue)
+	os.close(sys.stdout.fileno())
+	sys.stdout = logpatch(logger_queue,'Process number {0}: '.format(process_number),'')
 
 	#Create output
-	if processes>1: outputName = '{directory}/temp_{0:0>{1}}.root'.format(processNumber,int(log(processes-1,10))+1,directory=directory)
-	else: outputName = '{directory}/temp.root'.format(directory=directory)
-	output = ROOT.TFile(outputName,'RECREATE')
-	output.cd()
+	num_processes = len(ranges)
+	if num_processes>1: output_name = '{directory}/temp_{0:0>{1}}.root'.format(process_number,int(log(num_processes-1,10))+1,directory=directory)
+	else: output_name = '{directory}/temp.root'.format(directory=directory)
+	output = ROOT.TFile(output_name,'RECREATE')
 	
 	#Create local copy of analysis
-	analysis = analysis.__copy__()
+	analysis_instance = analysis_constructor()
+	analysis_instance.tree = tree
+	analysis_instance.grl = grl
+	analysis_instance.add_file(*files)
 
 	try:
-		analysis.AddStandardFunctions()
-		analysis.SetupChain()
-		if analysis.__skim__: analysis.AddResultFunction(skim(analysis.__chain__,analysis))
+		analysis_instance.add_standard_functions()
+		analysis_instance.setup_chain()
+		analysis_instance.add_result_function(skim(analysis_instance))
 
 	except Exception:
 		error = 'Error occured in initialization\n'+traceback.format_exc()
-		outputName = None
+		output_name = None
 		cleanup()
+
+	#tie results to output file
+	for result_function in analysis_instance.result_functions:
+		for result in result_function.results.values():
+			result.SetDirectory(output)
+
+	for meta_result_function in analysis_instance.meta_result_functions:
+		for result in meta_result_function.results.values():
+			result.SetDirectory(output)
 
 	milestone = 0.
 
-	start,end = entryRange
-	timeStart = time()
+	start,end = ranges[process_number]
+	time_start = time()
 
 	entry=0
 	try:
 		for entry in xrange(start,end):
 			#Create new event object (basically just a namespace)
-			event = EventObject()
+			event = event_object()
 			event.__stop__ = 1
 			event.__entry__ = entry
-			analysis.__chain__.SetEntry(entry)
-			for eventFunction in analysis.__EventFunctions__:
+			analysis_instance.pchain.set_entry(entry)
+			for event_function in analysis_instance.event_functions:
 				#Get registered branches from chain
-				analysis.__chain__.GetBranches(event,*(eventFunction.getItems(0)+eventFunction.getItems(1)+eventFunction.getItems(2)))
+				analysis_instance.pchain.get_branches(event,event_function.required_branches+event_function.create_branches.keys(),event_function.__class__.__name__)
 				#Call event function
-				eventFunction(event)
+				event_function(event)
 				if event.__break__: break
 				#Increment stop count (used in cutflow)
 				event.__stop__+= 1
-			for resultFunction in analysis.__ResultFunctions__:
+			for result_function in analysis_instance.result_functions:
 				#Call result function (does not necessarily respect event.__break__, must be implemented on case by case basis in __call__ of result function)
-				resultFunction(event)
+				result_function(event)
 
-			rate = (entry-start)/(time()-timeStart)
-			percentDone = float(entry-start+1)/(end-start)*100.
+			rate = (entry-start)/(time()-time_start)
+			done = float(entry-start+1)/(end-start)*100.
 		
-			if percentDone>milestone:
+			if done>milestone:
 				milestone+=10.
-				print 'Process number {0}: {1}% complete, {2} Hz'.format(processNumber,round(percentDone,2),round(rate,2))
-
+				print '{0}% complete, {1} Hz'.format(round(done,2),round(rate,2))
 
 	except Exception:
 		error = 'Exception caught in entry {0}\n'.format(entry)+traceback.format_exc()
-		outputName = None
+		output_name = None
 		cleanup()
 
 	#Handle results
 	try:
-		for resultFunction in analysis.__ResultFunctions__:
-			for v in resultFunction.items.values():
+		for result_function in analysis_instance.result_functions:
+			for result in result_function.results.values():
 				output.cd()
 				#Write result function items to output
-				v.Write()
+				result.Write()
 
 		#Only process meta-results for first process
-		if not processNumber: 
-			for metaResultFunction in analysis.__MetaResultFunctions__:
+		if not process_number:
+			for meta_result_function in analysis_instance.meta_result_functions:
 				#Call meta-result function
-				metaResultFunction(analysis.__files__)
-				for v in metaResultFunction.items.values():
+				meta_result_function(analysis_instance.files)
+				for result in meta_result_function.results.values():
 					output.cd()
 					#Write meta-result function items to output
-					v.Write()
+					result.Write()
 
 	except Exception:
 		error = 'Exception caught while handling results\n'+traceback.format_exc()
-		outputName = None
-		cleanup()	
+		output_name = None
+		cleanup()
 
-	print 'Process number {0}: {1}% complete, {2} Hz'.format(processNumber, round(percentDone,2), round(rate,2))	
-	print 'Process number {0}: Sending output {1}'.format(processNumber, outputName)
+	print '{0}% complete, {1} Hz'.format(round(done,2), round(rate,2))	
+	print 'Sending output {0}'.format(output_name)
 
 	cleanup()
 
-#Base analysis class
-class analysis():
-	def __init__(self,__keep__=False):
-	
-		self.__keep__ = __keep__
+def call_analyze_slice_condor(
+	module_name,
+	analysis_name,
+	tree,
+	grl,
+	files,
+	ranges,
+	process_number,
+	directory,
+	result_queue,
+	error_queue,
+	logger_queue,
+	):
+
+	analysis_framework = os.getenv('ANALYSISFRAMEWORK')
+	analysis_home = os.getenv('ANALYSISHOME')
+
+	sys.stdout = logpatch(logger_queue,'Process number {0}: '.format(process_number),'')
+
+	num_processes = len(ranges)
+	if num_processes>1: condor_dir = '{directory}/condor_{0:0>{1}}'.format(process_number,int(log(num_processes-1,10))+1,directory=directory)
+	else: condor_dir = '{directory}/condor'.format(directory=directory)
+
+	os.mkdir(condor_dir)
+	os.chdir(condor_dir)
+
+	output_name = os.path.abspath('output.root')
+
+	#cleanup function always called no matter form of exit
+	def cleanup(logger_text,error_text,output_name):
+		#output name will be None if there is some problem
+		if logger_text: print logger_text
+		if error_text:
+			output_name = None
+			error=error_text
+		else: error=None
+		result_queue.put(output_name)
+		#error will be None if there is NO problem
+		if error: error_queue.put(error)
+		sys.exit()
+
+	files_text = 'files.text'
+	with open(files_text,'w') as f:
+		for file_ in files: f.write(file_+'\n')
 		
-		self.__EventFunctions__ = []
-		self.__ResultFunctions__ = []
-		self.__MetaResultFunctions__ = []	
+	result_file_name = 'result.out'
+	error_file_name = 'error.out'
+	logger_file_name = 'logger.out'
+
+	#setup condor files
+	with open('{0}/condor/default_condor.submit'.format(analysis_framework)) as f:
+		with open('condor.submit','w') as f_out:
+			f_out.write(f.read())
+
+	with open('{0}/condor/default_condor_executable.sh'.format(analysis_framework)) as f:
+		with open('condor_executable.sh','w') as f_out:
+			f_out.write(f.read().format(
+				analysis_framework = analysis_framework,
+				analysis_home = analysis_home,
+				module_name = module_name,
+				analysis_name = analysis_name,
+				tree = tree,
+				grl = '\'{0}\''.format(grl) if grl is not None else None,
+				files = files_text,
+				start = ranges[process_number][0],
+				end = ranges[process_number][1],
+				output_name = output_name,
+				process_number = process_number,
+				error_file_name = error_file_name,
+				logger_file_name = logger_file_name,	
+				))
 	
-		self.__AdditionalItems__ = []
+	#submit condor job
+	try:
+		print call('condor_submit condor.submit').strip()
+	except Exception:
+		error_text = 'Error occured in initialization\n'+traceback.format_exc()
+		cleanup('',error_text,output_name)
+		
+	#attach to monitoring files
+	error_file = None
+	logger_file = None
+	while(1):
+		if not error_file and os.path.exists(error_file_name): error_file = open(error_file_name,'r+')
+		if not logger_file and os.path.exists(logger_file_name): logger_file = open(logger_file_name,'r+')
+		if None not in [
+			error_file,
+			logger_file,
+			]: break
+		if os.path.exists('done'):
+			cleanup('','An unknown error has prevented log file creation before job finished.',output_name)
+		sleep(1)
+
+	#monitor job
+	while not os.path.exists('done'):
+		logger_text = logger_file.read()
+		if logger_text: print logger_text.strip()
+		error_text = error_file.read()
+		if error_text: cleanup(logger_file.read(),error_text,output_name)
+		sleep(0.5)
+
+	cleanup(logger_file.read(),error_file.read(),output_name)	
+		
+def analyze_condor(
+	analysis_constructor,
+	module_name,
+	analysis_name,
+	tree,
+	grl,
+	files,
+	output,
+	entries=None,
+	num_processes=2
+	):
+
+	#generate default dictionaries needed by ROOT
+	generate_dictionaries()
+
+	print 'Setting up analysis'
+	print '-'*50+'\n'
+
+	#create initial analysis object to test for obvious problems
+	analysis_instance = analysis_constructor()
+	analysis_instance.tree = tree
+	analysis_instance.grl = grl
+	analysis_instance.add_file(*files)
+	analysis_instance.setup_chain()
+
+	print '\n'+'-'*50
+
+	if entries is not None:
+		entries = min([int(entries),analysis_instance.pchain.get_entries()])
+	else: entries = analysis_instance.pchain.get_entries()
+
+	if not entries: return 1
+
+	print 'Processing {0} entries with {1} processes'.format(entries,num_processes)
 	
-		self.__NewBranches__ = {}
-		self.__KeepBranches__ = []
+	#Result, error and log queue
+	result_queue = Queue()
+	error_queue = Queue()
+	logger_queue = Queue()
 
-		self.__files__ = set([])
-		self.__tree__ = 'physics'
-		self.__skim__ = False
-		self.__output__ = 'result.root'
-		self.__GRL__ = None
-		self.__processes__ = 2
-		self.__verbose__ = False
-		self.__Entries__ = None
-		
-		self.__result__ = []
-	
-	
-	def AddEventFunction(self,*__EventFunction__):
-		for EF in __EventFunction__: self.__EventFunctions__.append(EF)
+	#Create temp directory
+	while True:
+		directory = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
+		if directory not in os.listdir('.'):
+			os.mkdir(directory)
+			break
+	print 'Created temporary directory {0}'.format(directory)
 
-	def AddResultFunction(self,*__EventFunction__):
-		for EF in __EventFunction__: self.__ResultFunctions__.append(EF)
+	#Instantiate and start processes
+	ranges = [[i*(entries/num_processes),(i+1)*(entries/num_processes)] for i in range(num_processes)]; ranges[-1][-1]+=entries%(num_processes)
 
-	def AddMetaResultFunction(self,*__EventFunction__):
-		for EF in __EventFunction__: self.__MetaResultFunctions__.append(EF)
-	
-	def AddInput(self,*__input__):
-		self.__files__ = self.__files__.union(set(__input__))
-		
-	def AddItem(self,item,itemType):
-		self.__AdditionalItems__.append((item,itemType))
+	processes = [Process(target = call_analyze_slice_condor, args = (
+			module_name,
+			analysis_name,
+			tree,
+			grl,
+			files,
+			ranges,
+			process_number,
+			directory,
+			result_queue,
+			error_queue,
+			logger_queue,
+			)) for process_number in range(num_processes)]
 
-	def AddItems(self,itemType,*items):
-		for item in items:
-			self.__AdditionalItems__.append((item,itemType))
-	
-	def AddBranch(self,*b_tuples):
-		for b_tuple in b_tuples: self.__NewBranches__[b_tuple[0]] = b_tuple[1]
+	time_start = time()
+	for process in processes: process.start()
+	print '{0} processes started'.format(num_processes)
 
-	def KeepBranch(self,*bs):
-		for b in bs: self.__KeepBranches__.append(b)
-	
-	def SetTree(self,__tree__):
-		self.__tree__ = __tree__
-		
-	def SetSkim(self,__skim__):
-		self.__skim__ = __skim__
-		
-	def SetOutput(self,__output__):
-		self.__output__ = __output__
+	def cleanup():
+		for process in processes: 
+			process.terminate()
+			process.join()
+		#if os.path.exists(directory): shutil.rmtree(directory)		
+		sys.exit()
 
-	def SetGRL(self,__GRL__):
-		self.__GRL__ = __GRL__
+	#Wait for processes to complete or kill them if ctrl-c
+	finished = 0
+	results = []
+	while 1:
+		try: sleep(0.1)
+		except KeyboardInterrupt: cleanup()
 
-	def SetProcesses(self,__processes__):
-		self.__processes__ = __processes__
-		
-	def SetVerbose(self,__verbose__):
-		self.__verbose__ = __verbose__
-	
-	def AddStandardFunctions(self):
-		if self.__GRL__: self.__EventFunctions__ = [inGRL(self.__GRL__)]+self.__EventFunctions__
-		self.__EventFunctions__ = [computeMCEventWeight()]+self.__EventFunctions__
-		self.AddResultFunction(cutflow(self))
-		
-	def SetupChain(self):
-		
-		self.__chain__ = PChain(self.__tree__,keep=self.__keep__)
-		self.__chain__.AddFiles(*self.__files__)
-		for EF in self.__EventFunctions__:
-			for i in range(3):
-				self.__chain__.AddItems(i,*EF.getItems(i))
-		for EF in self.__EventFunctions__:
-			self.AddBranch(*[(name,type_) for name,type_ in EF.items.get(2)])
-		for item,itemType in self.__AdditionalItems__:
-			self.__chain__.AddItem(item,itemType)
+		#flush logger queue
+		while not logger_queue.empty():
+			print logger_queue.get()
 
-	def __call__(self):
+		#flush error queue
+		while not error_queue.empty():
+			print error_queue.get()
+			cleanup()
 
-
-		#Setup chain to catch any obvious problems
-		self.SetupChain()
-
-		if self.__Entries__: entries = min([self.__Entries__,self.__chain__.__chain__.GetEntries()])
-		else: entries = self.__chain__.__chain__.GetEntries()
-
-		if not entries: return 1
-		
-		#Result, error and log queue
-		resultQueue = Queue()
-		errorQueue = Queue()
-		loggerQueue = Queue()
-
-
-		#Create temp directory
-		while True:
-			directory = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
-			if directory not in os.listdir('.'):
-				os.mkdir(directory)
-				break
-		print 'Created temporary directory {0}'.format(directory)
-
-		#Instantiate and start processes
-		ranges = [[i*(entries/self.__processes__),(i+1)*(entries/self.__processes__)] for i in range(self.__processes__)]; ranges[-1][-1]+=entries%(self.__processes__)
-		processes = [Process(target = Analyze, args = (
-				self,
-				ranges[i],
-				resultQueue,
-				errorQueue,
-				loggerQueue,
-				i,
-				self.__processes__,
-				directory,
-				)) for i in range(self.__processes__)]
-
-		for process in processes: process.start()
-		print '{0} processes started'.format(self.__processes__)
-
-		def cleanup():
-			#import code; code.interact(local=locals())
-			for process in processes: 
-				process.terminate()
-				process.join()
-			if os.path.exists(directory): shutil.rmtree(directory)		
-			sys.exit()
-
-		#Wait for processes to complete or kill them if ctrl-c
-		finished = 0
-		while 1:
-			try: sleep(0.1)
-			except KeyboardInterrupt: cleanup()
-
+		#flush result queue
+		while not result_queue.empty():
+			finished+=1
 			#flush logger queue
-			while not loggerQueue.empty():
-				print loggerQueue.get()
-
+			while not logger_queue.empty():
+				print logger_queue.get()
 			#flush error queue
-			while not errorQueue.empty():
-				print errorQueue.get()
+			while not error_queue.empty():
+				print error_queue.get()
 				cleanup()
+			results.append(result_queue.get())
 
-			#flush result queue
-			while not resultQueue.empty():
-				finished+=1
-				#flush logger queue
-				while not loggerQueue.empty():
-					print loggerQueue.get()
-				#flush error queue
-				while not errorQueue.empty():
-					print errorQueue.get()
-					cleanup()
-				self.__result__.append(resultQueue.get())
+		if finished==num_processes: break		
 
-			if finished==self.__processes__: break		
+	print 'Overall rate: {0} Hz'.format(round(entries/(time()-time_start),2))
 
+	#Create path to output and output ROOT file, merge results
+	mkpath(os.path.dirname(output))
+	os.close(sys.stdout.fileno())
+	if num_processes>1:
+		merger = ROOT.TFileMerger()
+		if os.path.exists(output): os.remove(output)
+		merger.OutputFile(output)
+		for result in results:
+			merger.AddFile(result)
+		merger.Merge()
+	else:
+		shutil.move(results[0], output)
 
-		#Create path to output and output ROOT file, merge results
-		mkpath(os.path.dirname(self.__output__))
-		
-		if self.__processes__>1:
-			merger = ROOT.TFileMerger()
-			if os.path.exists(self.__output__): os.remove(self.__output__)
-			merger.OutputFile(self.__output__)
-			for result in self.__result__:
-				merger.AddFile(result)
-			merger.Merge()			
-		else:
-			shutil.move(self.__result__[0], self.__output__)
+	cleanup()
 
+def analyze_slice_condor(
+	module_name,
+	analysis_name,
+	tree,
+	grl,
+	files,
+	start,
+	end,
+	output_name,
+	process_number,
+	error_file_name,
+	logger_file_name,
+	):
+
+	generate_dictionaries()
+
+	error_file = open(error_file_name,'w+')
+	logger_file = open(logger_file_name,'w+')
+
+	error = None
+	#cleanup function always called no matter form of exit
+	def cleanup():
+		output.Close()
+		#error will be None if there is NO problem
+		if error is not None: error_file.write(error+'\n');
+		error_file.flush()
+		error_file.close()
+		sys.stdout.flush()
+		sys.stdout.close()
+		sys.exit()
+
+	#print statements executed in here and in Event/Result functions are redirected to the log file
+	sys.stdout = logpatch_file(logger_file)
+
+	#Create output
+	output = ROOT.TFile(output_name,'RECREATE')
+
+	cwd = os.getcwd()
+	os.chdir('{home}'.format(home=os.getenv('ANALYSISHOME')))
+
+	if not os.path.exists(module_name):
+		print '$ANALYSISHOME/analyses/{0} not found'.format(module_name)
+		return 0
+	module = '.'.join([part for part in module_name.split('/')]).rstrip('.py')
+	try:
+		analysis_constructor = __import__(module,globals(),locals(),[analysis_name]).__dict__[analysis_name]
+	except ImportError:
+		error = 'Problem importing {0} from $ANALYSISHOME/analyses/{1}\n'.format(analysis_name,module_name)+traceback.format_exc()
+		print error
+		return 0	
+	if not issubclass(analysis_constructor,analysis):
+		print '{0} in $ANALYSISHOME/analyses/{1} is not an analysis type'.format(analysis_constructor,module_name)
+		return 0
+
+	os.chdir(cwd)
+	
+	#Create local copy of analysis
+	analysis_instance = analysis_constructor()
+	analysis_instance.tree = tree
+	analysis_instance.grl = grl
+	with open(files) as f: files = [line.strip() for line in f.readlines() if line.strip()]
+	analysis_instance.add_file(*files)
+
+	try:
+		analysis_instance.add_standard_functions()
+		analysis_instance.setup_chain()
+		analysis_instance.add_result_function(skim(analysis_instance))
+
+	except Exception:
+		error = 'Error occured in initialization\n'+traceback.format_exc()
+		print error
+		output_name = None
 		cleanup()
 
-	def __copy__(self):
-		c = self.__class__()
+	#tie results to output file
+	for result_function in analysis_instance.result_functions:
+		for result in result_function.results.values():
+			result.SetDirectory(output)
 
-		c.__EventFunctions__ = [copy(EF) for EF in self.__EventFunctions__]
-		c.__ResultFunctions__ = [copy(EF) for EF in self.__ResultFunctions__]
-		c.__MetaResultFunctions__ = [copy(EF) for EF in self.__MetaResultFunctions__]
-	
-		c.__AdditionalItems__ = self.__AdditionalItems__[:]
-	
-		c.__NewBranches__ = self.__NewBranches__.copy()
-		c.__KeepBranches__ = self.__KeepBranches__[:]
+	for meta_result_function in analysis_instance.meta_result_functions:
+		for result in meta_result_function.results.values():
+			result.SetDirectory(output)
 
-		c.__files__ = self.__files__
-		c.__tree__ = self.__tree__
-		c.__skim__ = self.__skim__
-		c.__output__ = self.__output__
-		c.__GRL__ = self.__GRL__
-		c.__processes__ = self.__processes__
-		c.__verbose__ = self.__verbose__
-		c.__Entries__ = self.__Entries__
-		c.__keep__ = self.__keep__
+	milestone = 0.
 
-		return c
-	
+	time_start = time()
 
-import random
+	entry=0
+	try:
+		for entry in xrange(start,end):
+			#Create new event object (basically just a namespace)
+			event = event_object()
+			event.__stop__ = 1
+			event.__entry__ = entry
+			analysis_instance.pchain.set_entry(entry)
+			for event_function in analysis_instance.event_functions:
+				#Get registered branches from chain
+				analysis_instance.pchain.get_branches(event,event_function.required_branches+event_function.create_branches.keys(),event_function.__class__.__name__)
+				#Call event function
+				event_function(event)
+				if event.__break__: break
+				#Increment stop count (used in cutflow)
+				event.__stop__+= 1
+			for result_function in analysis_instance.result_functions:
+				#Call result function (does not necessarily respect event.__break__, must be implemented on case by case basis in __call__ of result function)
+				result_function(event)
 
-if __name__=='__main__':
-	import code
+			rate = (entry-start)/(time()-time_start)
+			done = float(entry-start+1)/(end-start)*100.
+		
+			if done>milestone:
+				milestone+=10.
+				print '{0}% complete, {1} Hz'.format(round(done,2),round(rate,2))
+
+	except Exception:
+		error = 'Exception caught in entry {0}\n'.format(entry)+traceback.format_exc()
+		output_name = None
+		cleanup()
+
+	#Handle results
+	try:
+		for result_function in analysis_instance.result_functions:
+			for result in result_function.results.values():
+				output.cd()
+				#Write result function items to output
+				result.Write()
+
+		#Only process meta-results for first process
+		if not process_number:
+			for meta_result_function in analysis_instance.meta_result_functions:
+				#Call meta-result function
+				meta_result_function(analysis_instance.files)
+				for result in meta_result_function.results.values():
+					output.cd()
+					#Write meta-result function items to output
+					result.Write()
+
+	except Exception:
+		error = 'Exception caught while handling results\n'+traceback.format_exc()
+		output_name = None
+		cleanup()
+
+	print '{0}% complete, {1} Hz'.format(round(done,2), round(rate,2))	
+	print 'Sending output {0}'.format(output_name)
+
+	cleanup()
+
+
+#Base analysis class
+class analysis():
+
+	def __init__(self):
+		self.event_functions = []
+		self.result_functions = []
+		self.meta_result_functions = []
+
+		self.required_branches = []
+		self.create_branches = {}
+		self.keep_branches = []
+
+		self.files = set([])
+		self.tree = 'physics'
+		self.grl = None
 	
-	a = analysis()
-	a.SetProcesses(10)
-	a()
+	def add_event_function(self,*event_functions):
+		self.event_functions += event_functions
+
+	def add_result_function(self,*result_functions):
+		self.result_functions += result_functions
+
+	def add_meta_result_function(self,*result_functions):
+		self.meta_result_functions += result_functions
 	
-	code.interact(local=locals())
-	
-	
+	def add_file(self,*files):
+		self.files = self.files.union(set(files))
+		
+	def add_standard_functions(self):
+		if self.grl: self.event_functions = [in_grl(self.grl)]+self.event_functions
+		self.event_functions = [compute_mc_weight()]+self.event_functions
+		self.add_result_function(cutflow(self.event_functions))
+		
+	def setup_chain(self):
+		self.pchain = pchain(self.tree)
+		self.pchain.add_files(self.files)
+		for event_function in self.event_functions:
+			self.required_branches += event_function.required_branches
+			self.create_branches.update(event_function.create_branches)
+			self.keep_branches += event_function.keep_branches
+			self.pchain.create_branches(event_function.create_branches.keys(),event_function.__class__.__name__)
+		self.pchain.request_branches(self.required_branches)
+		self.pchain.request_branches(self.keep_branches)
+

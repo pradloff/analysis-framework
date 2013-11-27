@@ -1,86 +1,102 @@
 from xml.dom.minidom import parseString
-from common.EventFunction import EventFunction, ResultFunction
+from common.functions import event_function, result_function
 import ROOT
-import re
+import os
 
 #Good run list parser
-def parseGoodRunListXML(goodRunListXML):
+def parse_grl_xml(grl_xml):
+	if not os.path.exists(grl_xml):
+		raise OSError('Good run list {0} not found'.format(grl_xml))
+
+	with open(grl_xml) as f: dom = parseString(f.read())
+
+	grl = {}
 	try:
-		with open(goodRunListXML) as f: x = f.read()
-		dom = parseString(x)
-	except:
-		print 'File {f} does not exist'.format(f=goodRunListXML)
-		return {}
+		for lumiblock_collection in dom.getElementsByTagName('LumiBlockCollection'):
+			run = int(lumiblock_collection.getElementsByTagName('Run')[0].firstChild.data)
+			for lumiblock_range in lumiblock_collection.getElementsByTagName('LBRange'):
+				start = lumiblock_range.getAttribute('Start')
+				end = lumiblock_range.getAttribute('End')
+				if run not in grl: grl[run] = []
+				grl[run]+= range(int(start),int(end)+1)
+	except Exception as error:
+		print 'Problem loading good run list {0}'.format(grl_xml)
+		raise error
 
-	goodRunListDict = {}
-	
-	for lumiBlockCollection in dom.getElementsByTagName('LumiBlockCollection'):
-		run = int(lumiBlockCollection.getElementsByTagName('Run')[0].firstChild.data)
-		for lBRange in lumiBlockCollection.getElementsByTagName('LBRange'):
-			start = lBRange.getAttribute('Start')
-			end = lBRange.getAttribute('End')
-			if run not in goodRunListDict: goodRunListDict[run] = []
-			goodRunListDict[run]+= range(int(start),int(end)+1)
-				
-	return goodRunListDict
+	return grl
 
+#Sets MC event weight (1 if data) and instantiates __weight__
+class compute_mc_weight(event_function):
 
-
-class computeMCEventWeight(EventFunction):
-
-	def __init__(self,*args,**kwargs):
-		EventFunction.__init__( self,*args,**kwargs )
-		self.addItems()
-		
-	def addItems(self):
-		self.addItem('mc_event_weight',2,type_='float')
-		return
+	def __init__(self):
+		event_function.__init__(self)
+		self.create_branches['mc_event_weight'] = 'float'
+		self.create_branches['is_mc'] = 'bool'
 		
 	def __call__(self,event):
-		try:
-			weight = event.mc_event_weight
-		except AttributeError:
-			weight = 1.
+		#if this function has been applied to dataset already then don't change
+		if 'is_mc' in event: is_mc = event.is_mc
+		#elif this function has not been applied then we look for mc_ related variable
+		elif 'mc_event_weight' in event: is_mc = True
+		#else this is data that has not seen this function
+		else: is_mc = False
+
+		#if this is mc or data that has seen this function then don't change
+		if 'mc_event_weight' in event: weight = event.mc_event_weight
+		#this is data so should have "base" weight of 1.
+		else: weight = 1.
 
 		event.mc_event_weight = weight
+		event.is_mc = is_mc
 		event.__weight__ = weight
 
-class inGRL(EventFunction):
+#apply grl
+class in_grl(event_function):
 
-	def __init__(self,*args,**kwargs):
-		EventFunction.__init__( self,*args,**kwargs )
-		self.addItems()
-		self.GRL = parseGoodRunListXML(args[0])
-		
-	def addItems(self):
-		self.addItem('RunNumber',0)
-		self.addItem('lbn',0)
-		return
-		
+	def __init__(self,grl_xml):
+		event_function.__init__(self)
+
+		self.grl = parse_grl_xml(grl_xml)
+		self.required_branches += [
+			'RunNumber',
+			'lbn',
+			]
+
 	def __call__(self,event):
-		if event.RunNumber in self.GRL:
-			if event.lbn in self.GRL.get(event.RunNumber): return
+		if event.RunNumber in self.grl:
+			if event.lbn in self.grl.get(event.RunNumber): return
 		event.__break__ = True
 
-class cutflow(ResultFunction):
+class cutflow(result_function):
 
-	def __init__(self,*args,**kwargs):
-		ResultFunction.__init__(self,*args,**kwargs)
-		
-		self.addItem('cutflow', ROOT.TH1F('cutflow','cutflow',len(args[0].__EventFunctions__)+1,0,len(args[0].__EventFunctions__)+1))		
-		self.addItem('cutflow_weighted', ROOT.TH1F('cutflow_reweighted','cutflow_reweighted',len(args[0].__EventFunctions__)+1,0,len(args[0].__EventFunctions__)+1))		
-		for i,name in enumerate(['input']+[e.__class__.__name__ for e in args[0].__EventFunctions__]):
-			self.items.get('cutflow').GetXaxis().SetBinLabel(i+1,name)
-			self.items.get('cutflow_weighted').GetXaxis().SetBinLabel(i+1,name)
+	def __init__(self,event_functions):
+		result_function.__init__(self)
+
+		self.results['cutflow'] = ROOT.TH1F(
+			'cutflow',
+			'cutflow',
+			len(event_functions)+1,
+			0,
+			len(event_functions)+1,
+			)
+		self.results['cutflow_weighted'] = ROOT.TH1F(
+			'cutflow_weighted',
+			'cutflow_weighted',
+			len(event_functions)+1,
+			0,
+			len(event_functions)+1,
+			)
+
+		for i,event_function_name in enumerate(['input']+[event_function.__class__.__name__ for event_function in event_functions]):
+			self.results['cutflow'].GetXaxis().SetBinLabel(i+1,event_function_name)
+			self.results['cutflow_weighted'].GetXaxis().SetBinLabel(i+1,event_function_name)
 		
 	def __call__(self,event):
-		for i in range(event.__stop__): self.items.get('cutflow').Fill(i)
-		for i in range(event.__stop__): self.items.get('cutflow_weighted').Fill(i,event.__weight__)
-		return
+		for i in range(event.__stop__):
+			self.results['cutflow'].Fill(i)
+			self.results['cutflow_weighted'].Fill(i)
 
-from array import array
-
-lookup = {
+lookup_description = {
 	'Char_t':'B',
 	'UChar_t':'b',
 	'Short_t':'S',
@@ -94,101 +110,82 @@ lookup = {
 	'Bool_t':'O'
 	}
 
-lookup2 = {
-	'int':'Int_t',
-	'unsigned int':'UInt_t',
+lookup_created = {
 	'float':'Float_t',
+	'int':'Int_t',
+	'bool':'Bool_t',
 	'string':'Char_t',
 	}
 
-class skim(ResultFunction):
+class skim(result_function):
 
-	def __init__(self,*args,**kwargs):
-	
-		ROOT.gROOT.ProcessLine("struct Variable{Int_t variable_int; Bool_t variable_bool; Float_t variable_float;};")
-		from ROOT import Variable
+	def __init__(self,analysis):
+		result_function.__init__(self)
 		
-		ResultFunction.__init__(self,*args,**kwargs)
-		self.__chain__ = args[0]
-		self.__analysis__ = args[1]
-		self.addItem('skim',ROOT.TTree(self.__chain__.__chain__.GetName(),self.__chain__.__chain__.GetTitle()))
-		self.__count__ = 0
-		self.__total__ = 0
+		self.analysis = analysis
+		self.pchain = self.analysis.pchain
 
-		for itemName in self.__analysis__.__KeepBranches__:
-			#print 'matching {0}'.format(itemName)
-			#sys.stdout.flush()
-			itemMatches = [name for name in self.__chain__.__items__ if re.match('^'+itemName+'$',name)]
-			if not itemMatches:
-				if not sum(1 for name in self.__analysis__.__NewBranches__ if re.match('^'+itemName+'$',name)):
-					raise Exception,'No matches for "{0}", slim item.'.format(itemName)
+		#Load struct for branches with types in [int,bool,float]
+		ROOT.gROOT.ProcessLine("struct Variable{Int_t variable_int; Bool_t variable_bool; Float_t variable_float;};")
 
-			for itemName in itemMatches:
-				#print '\tfound match {0}'.format(itemName)
-				#sys.stdout.flush()
-				availableItems = [item for item in self.__chain__.GetAvailableItems() if item.GetName()==itemName]
-				if not availableItems: raise Exception,'The following item not found in chain: {0}'.format(itemName)
-				try: itemType = availableItems[0].GetTypeName()
-				except: itemType = availableItems[0].GetClassName()
-				#print itemType
-				if itemType in ['Char_t','Int_t','Bool_t','UInt_t','Long64_t','Float_t','Double_t']:
-					try: desc = lookup[itemType]
-					except KeyError: raise Exception,'Unknown item type {0} for {1}'.format(itemType,itemName)
-					self.items.get('skim').Branch(itemName,self.__chain__.__items__[itemName],itemName+'/'+desc)
-				elif itemType in ['string'] or itemType.startswith('vector'):
-					#try: desc = lookup[lookup2[itemType.split('<')[-1].split('>')[0]]]
-					#except KeyError: raise Exception,'Unknown item type {0} for {1}'.format(itemType,itemName)
-					self.items.get('skim').Branch(itemName,itemType,ROOT.AddressOf(self.__chain__.__items__[itemName]))
-				else:
-					raise Exception,'Unknown item type {0} for {1}'.format(itemType,itemName)
+		self.tree = ROOT.TTree(self.pchain().GetName(),self.pchain().GetTitle())
+		self.results['skim'] = self.tree
+
+		for branch_name in sorted(self.analysis.keep_branches):
+			if branch_name in self.analysis.create_branches: continue
+			if branch_name not in self.pchain.get_available_branch_names(required=True):
+				raise ValueError('No matches for required branch {0}'.format(branch_name))
+			branch_type = self.pchain.branch_types[branch_name]
+			if branch_type in lookup_description:
+				self.tree.Branch(branch_name,self.pchain.branch_values[branch_name],branch_name+'/'+lookup_description[branch_type])
+			elif branch_type == 'string':
+				self.tree.Branch(branch_name,branch_type,ROOT.AddressOf(self.pchain.branch_values[branch_name]))
+			elif branch_type.startswith('vector'):
+				self.tree.Branch(branch_name,branch_type,ROOT.AddressOf(self.pchain.branch_values[branch_name]))
+			else: raise ValueError('Branch {0} could not be configured, type "{1}" not supported'.format(branch_name,branch_type))
 			
-		self.__items__ = {}
+		self.created_branches = {}
 
-		for name,type_ in self.__analysis__.__NewBranches__.items():
-			if type_.startswith('std.vector'):
-				self.__items__[name] = ROOT.std.vector(type_.split('.')[-1])()
-				if self.items.get('skim').GetBranch(name):
-					self.items.get('skim').SetBranchAddress(name,self.__items__[name])
-				else: self.items.get('skim').Branch(name,self.__items__[name])
-			elif type_ == 'int': 
-				self.__items__[name] = Variable()
-				if self.items.get('skim').GetBranch(name):
-					self.items.get('skim').SetBranchAddress(name,ROOT.AddressOf(self.__items__[name],'variable_int'))
-				else: self.items.get('skim').Branch(name,ROOT.AddressOf(self.__items__[name],'variable_int'),name+'/I')
-			elif type_ == 'bool': 
-				self.__items__[name] = Variable()
-				if self.items.get('skim').GetBranch(name):
-					self.items.get('skim').SetBranchAddress(name,ROOT.AddressOf(self.__items__[name],'variable_bool'))
-				else: self.items.get('skim').Branch(name,ROOT.AddressOf(self.__items__[name],'variable_bool'),name+'/O')
-			elif type_ == 'float': 
-				self.__items__[name] = Variable()
-				if self.items.get('skim').GetBranch(name):
-					self.items.get('skim').SetBranchAddress(name,ROOT.AddressOf(self.__items__[name],'variable_float'))
-				else: self.items.get('skim').Branch(name,ROOT.AddressOf(self.__items__[name],'variable_float'),name+'/F')
-
-
-
-		"""
-		for name,type_ in self.__analysis__.__CancelBranches__.items():
-			if name not in [b.GetName() for b in self.items.get('skim').GetListOfBranches()]: continue
-			self.items.get('skim').SetBranchStatus(name,0)
-		"""
+		for branch_name,branch_type in sorted(self.analysis.create_branches.items()):
+			if branch_type is None: continue
+			if branch_type.startswith('std.vector.'):
+				vector_type = branch_type.replace('std.vector.','',1)
+				if vector_type not in [
+					'float',
+					'int',
+					'bool',
+					]: raise TypeError('Unsupported vector type "{0}" for branch {1}'.format(vector_type,branch_name))
+				self.created_branches[branch_name] = ROOT.std.vector(vector_type)()
+				#overwrite existing branch
+				if self.tree.GetBranch(branch_name):
+					self.tree.SetBranchAddress(branch_name,self.created_branches[branch_name])
+				#create new branch
+				else: self.tree.Branch(branch_name,self.created_branches[branch_name])
+			elif branch_type in [
+				'float',
+				'int',
+				'bool',
+				]:
+				self.created_branches[branch_name] = ROOT.Variable()
+				#overwrite existing branch
+				if self.tree.GetBranch(branch_name):
+					self.tree.SetBranchAddress(branch_name,ROOT.AddressOf(self.created_branches[name],'variable_{0}'.format(branch_type)))
+				#create new branch
+				else: self.tree.Branch(branch_name,ROOT.AddressOf(self.created_branches[branch_name],'variable_{0}'.format(branch_type)),branch_name+'/'+lookup_description[lookup_created[branch_type]])
+			else: raise ValueError('Branch {0} could not be configured, type "{1}" not supported'.format(branch_name,branch_type))
 
 	def __call__(self,event):
-		self.__total__ +=1
 		if event.__break__: return
-		self.__chain__.__chain__.GetEntry(event.__entry__)
-		for name,branch in self.__items__.items():
-			type_ = self.__analysis__.__NewBranches__[name] 
-			if type_.startswith('std.vector'):
-				branch.clear()
-				for v in getattr(event,name): branch.push_back(v)
-			elif type_ == 'int': branch.variable_int = getattr(event,name)
-			elif type_ == 'bool': branch.variable_bool = getattr(event,name)
-			elif type_ == 'float': branch.variable_float = getattr(event,name)
-			
-		self.items.get('skim').Fill()
-		self.__count__ +=1
 
-		return
+		self.pchain().GetEntry(event.__entry__)
+		for branch_name,branch_value in self.created_branches.items():
+			branch_type = self.analysis.create_branches[branch_name]
+			if branch_type.startswith('std.vector'):
+				branch_value.clear()
+				for value in getattr(event,branch_name): branch_value.push_back(value)
+			elif branch_type == 'int': branch_value.variable_int = getattr(event,branch_name)
+			elif branch_type == 'bool': branch_value.variable_bool = getattr(event,branch_name)
+			elif branch_type == 'float': branch_value.variable_float = getattr(event,branch_name)
+			
+		self.tree.Fill()
 

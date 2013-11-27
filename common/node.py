@@ -1,24 +1,26 @@
 class node():
-	def __init__(self,__parents__,__children__,__item__):
+	def __init__(self,parents,children,__item__):
 		self.__item__ = __item__
-		self.__parents__ = []
-		self.addParents(*__parents__)
-		self.__children__ = []
-		self.addChildren(*__children__)
+		self.parents = []
+		self.add_parents(*parents)
+		self.children = []
+		self.add_children(*children)
 		#self.__ancestor__ = {}
 		#self.__decscendants__ = {}
 				
-	def addParents(self,*parents):
+	def add_parents(self,*parents):
 			for parent in parents: 
-				if parent not in self.__parents__: 
-					self.__parents__.append(parent)
-					parent.addChildren(self)
+				if parent not in self.parents: 
+					self.parents.append(parent)
+					parent.add_children(self)
 					
-	def addChildren(self,*children):
+	def add_children(self,*children):
 			for child in children:
-				if child not in self.__children__:
-					self.__children__.append(child)
-					child.addParents(self)
+				if child not in self.children:
+					self.children.append(child)
+					child.add_parents(self)
+
+	def __call__(self): return self.__item__
 
 	"""
 	def getDescendants(self):
