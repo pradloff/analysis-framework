@@ -15,8 +15,6 @@ class analysis():
 		self.files = []
 		self.tree = 'physics'
 		self.grl = None
-
-		self.keep_all = False
 	
 	def add_event_function(self,*event_functions):
 		self.event_functions += event_functions
@@ -45,11 +43,6 @@ class analysis():
 			self.create_branches.update(event_function.create_branches)
 			self.keep_branches += event_function.keep_branches
 			self.pchain.create_branches(event_function.create_branches.keys(),event_function.__class__.__name__)
-		if self.keep_all:
-			for branch_name in self.pchain.get_available_branch_names():
-				if branch_name in self.keep_branches: continue
-				self.keep_branches.append(branch_name)
 		self.pchain.request_branches(self.required_branches)
 		self.pchain.request_branches(self.keep_branches)
-
 

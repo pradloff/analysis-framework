@@ -17,22 +17,20 @@ from math import log
 from common.external import call
 from common.misc import logpatch, logpatch_file
 
-def call_analyze_condor(
+def call_analyze(
 	module_name,
 	analysis_name,
 	files=[],
 	tree='physics',
 	grl= None,
-	num_processes=0,
+	num_processes=2,
 	output='result.root',
 	entries=None,
 	keep=False,
 	):
 
-	files_abs_path = [os.path.abspath(file_) for file_ in files]
-
 	cwd = os.getcwd()
-	os.chdir(os.getenv('ANALYSISHOME'))
+	os.chdir('{home}'.format(home=os.getenv('ANALYSISHOME')))
 
 	if not os.path.exists(module_name):
 		print '$ANALYSISHOME/analyses/{0} not found'.format(module_name)
@@ -50,128 +48,19 @@ def call_analyze_condor(
 
 	os.chdir(cwd)
 
-	return analyze_condor(
+	return analyze(
 		analysis_constructor,
-		module_name,
-		analysis_name,
 		tree,
 		grl,
-		files_abs_path,
+		files,
 		output,
 		entries=entries,
-		num_processes=num_processes
-		keep,
+		num_processes=num_processes,
+		keep=keep,
 		)
 
-def call_analyze_slice_condor(
-	module_name,
-	analysis_name,
-	tree,
-	grl,
-	files,
-	ranges,
-	process_number,
-	directory,
-	result_queue,
-	error_queue,
-	logger_queue,
-	keep,
-	):
-
-	analysis_framework = os.getenv('ANALYSISFRAMEWORK')
-	analysis_home = os.getenv('ANALYSISHOME')
-
-	sys.stdout = logpatch(logger_queue,'Process number {0}: '.format(process_number),'')
-
-	num_processes = len(ranges)
-	if num_processes>1: condor_dir = '{directory}/condor_{0:0>{1}}'.format(process_number,int(log(num_processes-1,10))+1,directory=directory)
-	else: condor_dir = '{directory}/condor'.format(directory=directory)
-
-	os.mkdir(condor_dir)
-	os.chdir(condor_dir)
-
-	output_name = os.path.abspath('output.root')
-
-	#cleanup function always called no matter form of exit
-	def cleanup(logger_text,error_text,output_name):
-		#output name will be None if there is some problem
-		if logger_text: print logger_text
-		if error_text:
-			output_name = None
-			error=error_text
-		else: error=None
-		result_queue.put(output_name)
-		#error will be None if there is NO problem
-		if error: error_queue.put(error)
-		sys.exit()
-
-	files_text = 'files.text'
-	with open(files_text,'w') as f:
-		for file_ in files: f.write(file_+'\n')
-		
-	result_file_name = 'result.out'
-	error_file_name = 'error.out'
-	logger_file_name = 'logger.out'
-
-	#setup condor files
-	with open('{0}/condor/default_condor.submit'.format(analysis_framework)) as f:
-		with open('condor.submit','w') as f_out:
-			f_out.write(f.read())
-
-	with open('{0}/condor/default_condor_executable.sh'.format(analysis_framework)) as f:
-		with open('condor_executable.sh','w') as f_out:
-			f_out.write(f.read().format(
-				analysis_framework = analysis_framework,
-				analysis_home = analysis_home,
-				module_name = module_name,
-				analysis_name = analysis_name,
-				tree = tree,
-				grl = '\'{0}\''.format(grl) if grl is not None else None,
-				files = files_text,
-				keep = keep,
-				start = ranges[process_number][0],
-				end = ranges[process_number][1],
-				output_name = output_name,
-				process_number = process_number,
-				error_file_name = error_file_name,
-				logger_file_name = logger_file_name,	
-				))
-	
-	#submit condor job
-	try:
-		print call('condor_submit condor.submit').strip()
-	except Exception:
-		error_text = 'Error occured in initialization\n'+traceback.format_exc()
-		cleanup('',error_text,output_name)
-		
-	#attach to monitoring files
-	error_file = None
-	logger_file = None
-	while(1):
-		if not error_file and os.path.exists(error_file_name): error_file = open(error_file_name,'r+')
-		if not logger_file and os.path.exists(logger_file_name): logger_file = open(logger_file_name,'r+')
-		if None not in [
-			error_file,
-			logger_file,
-			]: break
-		if os.path.exists('done'):
-			cleanup('','An unknown error has prevented log file creation before job finished.',output_name)
-		sleep(1)
-
-	#monitor job
-	while not os.path.exists('done'):
-		logger_text = logger_file.read()
-		if logger_text: print logger_text.strip()
-		error_text = error_file.read()
-		if error_text: cleanup(logger_file.read(),error_text,output_name)
-		sleep(0.5)
-
-	cleanup(logger_file.read(),error_file.read(),output_name)	
-		
-def analyze_condor(
+def analyze(
 	analysis_constructor,
-	module_name,
-	analysis_name,
 	tree,
 	grl,
 	files,
@@ -220,9 +109,8 @@ def analyze_condor(
 	#Instantiate and start processes
 	ranges = [[i*(entries/num_processes),(i+1)*(entries/num_processes)] for i in range(num_processes)]; ranges[-1][-1]+=entries%(num_processes)
 
-	processes = [Process(target = call_analyze_slice_condor, args = (
-			module_name,
-			analysis_name,
+	processes = [Process(target = analyze_slice, args = (
+			analysis_constructor,
 			tree,
 			grl,
 			files,
@@ -243,7 +131,7 @@ def analyze_condor(
 		for process in processes: 
 			process.terminate()
 			process.join()
-		#if os.path.exists(directory): shutil.rmtree(directory)		
+		if os.path.exists(directory): shutil.rmtree(directory)		
 		sys.exit()
 
 	#Wait for processes to complete or kill them if ctrl-c
@@ -293,71 +181,48 @@ def analyze_condor(
 
 	cleanup()
 
-def analyze_slice_condor(
-	module_name,
-	analysis_name,
+def analyze_slice(
+	analysis_constructor,
 	tree,
 	grl,
 	files,
-	start,
-	end,
-	output_name,
+	ranges,
 	process_number,
-	error_file_name,
-	logger_file_name,
+	directory,
+	result_queue,
+	error_queue,
+	logger_queue,
 	keep,
 	):
 
 	generate_dictionaries()
 
-	error_file = open(error_file_name,'w+')
-	logger_file = open(logger_file_name,'w+')
-
 	error = None
 	#cleanup function always called no matter form of exit
 	def cleanup():
 		output.Close()
+		#output name will be None if there is some problem
+		result_queue.put(output_name)
 		#error will be None if there is NO problem
-		if error is not None: error_file.write(error+'\n');
-		error_file.flush()
-		error_file.close()
-		sys.stdout.flush()
-		sys.stdout.close()
+		if error: error_queue.put(error)
 		sys.exit()
 
-	#print statements executed in here and in Event/Result functions are redirected to the log file
-	sys.stdout = logpatch_file(logger_file)
+	#print statements executed in here and in Event/Result functions are redirected to the main logger
+	os.close(sys.stdout.fileno())
+	sys.stdout = logpatch(logger_queue,'Process number {0}: '.format(process_number),'')
 
 	#Create output
+	num_processes = len(ranges)
+	if num_processes>1: output_name = '{directory}/temp_{0:0>{1}}.root'.format(process_number,int(log(num_processes-1,10))+1,directory=directory)
+	else: output_name = '{directory}/temp.root'.format(directory=directory)
 	output = ROOT.TFile(output_name,'RECREATE')
-
-	cwd = os.getcwd()
-	os.chdir('{home}'.format(home=os.getenv('ANALYSISHOME')))
-
-	if not os.path.exists(module_name):
-		print '$ANALYSISHOME/analyses/{0} not found'.format(module_name)
-		return 0
-	module = '.'.join([part for part in module_name.split('/')]).rstrip('.py')
-	try:
-		analysis_constructor = __import__(module,globals(),locals(),[analysis_name]).__dict__[analysis_name]
-	except ImportError:
-		error = 'Problem importing {0} from $ANALYSISHOME/analyses/{1}\n'.format(analysis_name,module_name)+traceback.format_exc()
-		print error
-		return 0	
-	if not issubclass(analysis_constructor,analysis):
-		print '{0} in $ANALYSISHOME/analyses/{1} is not an analysis type'.format(analysis_constructor,module_name)
-		return 0
-
-	os.chdir(cwd)
 	
 	#Create local copy of analysis
 	analysis_instance = analysis_constructor()
 	analysis_instance.tree = tree
 	analysis_instance.grl = grl
-	analysis_instance.keep_all = keep
-	with open(files) as f: files = [line.strip() for line in f.readlines() if line.strip()]
 	analysis_instance.add_file(*files)
-
+	analysis_instance.keep_all=keep
 	try:
 		analysis_instance.add_standard_functions()
 		analysis_instance.setup_chain()
@@ -365,7 +230,6 @@ def analyze_slice_condor(
 
 	except Exception:
 		error = 'Error occured in initialization\n'+traceback.format_exc()
-		print error
 		output_name = None
 		cleanup()
 
@@ -380,6 +244,7 @@ def analyze_slice_condor(
 
 	milestone = 0.
 
+	start,end = ranges[process_number]
 	time_start = time()
 
 	entry=0
@@ -446,9 +311,8 @@ if __name__ == '__main__':
 
 	import sys
 	import argparse
-	import code
 	
-	parser = argparse.ArgumentParser(prog='analyze_condor.py',description='Useful condor caller for analyses.')
+	parser = argparse.ArgumentParser(prog='analyze.py',description='Useful caller for analyses.')
 	parser.add_argument('-i','--input',default=[],dest='INPUT', nargs='+',help='Input file(s) to analyze.')
 	parser.add_argument('-t','--textinput',default=None,dest='TEXTINPUT',help='Text file containing input file(s) to analyze.  Separate files by line.')
 	parser.add_argument('-m','--module',default=None,dest='MODULE',help='Module containing analysis class.')
@@ -461,32 +325,36 @@ if __name__ == '__main__':
 	parser.add_argument('--keep',default=False,dest='KEEP',action='store_true',help='Keep all branches, default False')
 
 	args = parser.parse_args()
-	args = parser.parse_args()
 		
 	allargs = True
 	
-	if not any([args.INPUT,args.TEXTINPUT]): print 'Must include some form of input [-i, --input], [-t, --textinput]'; allargs = False
+	if not any([args.INPUT,args.TEXTINPUT,args.DATASET,args.GRID]): print 'Must include some form of input [-i, --input], [-t, --textinput]'; allargs = False
 	if not args.MODULE: print 'Must include name of module containing analysis [-m, --module]'; allargs = False
 	if not args.ANALYSIS: print 'Must include name of analysis [-a, --analysis]'; allargs = False
 
 	if not allargs: sys.exit()
 
 	files = []
-
+	
 	if isinstance(args.INPUT,str): files.append(args.INPUT)
 	elif isinstance(args.INPUT,list): files += args.INPUT
-
-	call_analyze_condor(
+	
+	if args.TEXTINPUT:
+		with open(args.TEXTINPUT) as f:
+			for line in f.readlines():
+				if not line.strip(): continue
+				files.append(line.strip())
+	
+	call_analyze(
 		args.MODULE,
 		args.ANALYSIS,
-		files,
-		tree = args.TREE,
-		grl = args.GRL,
+		files=files,
+		tree=args.TREE,
+		grl=args.GRL,
 		num_processes=args.PROCESSES,
-		output = args.OUTPUT,
-		entries = args.ENTRIES
-		keep=args.KEEP
-		)	
+		output=args.OUTPUT,
+		entries=args.ENTRIES,
+		keep=args.KEEP,
+		)
 
-	sys.exit()
 	

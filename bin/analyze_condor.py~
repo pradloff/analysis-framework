@@ -32,7 +32,7 @@ def call_analyze_condor(
 	files_abs_path = [os.path.abspath(file_) for file_ in files]
 
 	cwd = os.getcwd()
-	os.chdir(os.getenv('ANALYSISHOME'))
+	os.chdir('{home}'.format(home=os.getenv('ANALYSISHOME')))
 
 	if not os.path.exists(module_name):
 		print '$ANALYSISHOME/analyses/{0} not found'.format(module_name)

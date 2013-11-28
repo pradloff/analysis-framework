@@ -1,0 +1,15 @@
+################
+#
+# Condor submit file for simple test job example
+#
+################
+
+Universe        = vanilla
+Executable      = condor_executable.sh
+
+input           = /dev/null
+output          = hello.out
+error           = hello.error
+log             = hello.log
+
+Queue

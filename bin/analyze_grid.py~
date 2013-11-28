@@ -2,14 +2,8 @@
 
 import os
 import sys
-from common.analysis import analysis
+from common.analysis import analysis,analyze,analyze_condor
 import traceback
-import shutil
-from time import sleep, time
-from distutils.dir_util import mkpath
-import string
-import random
-from common.external import call
 
 def call_grid(
 	module_name,
@@ -74,29 +68,27 @@ def call_grid(
 		keep='--keep' if keep else '',
 		)
 	
-	else: prun_command = 'prun --exec "{final_grid_command}" --rootVer="5.34.07" --cmtConfig="x86_64-slc5-gcc43-opt" --outputs="skim.root" --inDsTxt=input.txt --outDS={output} --useContElementBoundary{merge}'
+	else: prunCommand = 'prun --exec "{final_grid_command}" --rootVer="5.34.07" --cmtConfig="x86_64-slc5-gcc43-opt" --outputs="skim.root" --inDsTxt={input_txt} --outDS={output} --useContElementBoundary{merge}'
 
 	with open(grid_input) as f: dataset = json.load(f)
 	
 	for output,contents in dataset.items():
 		grl = contents.get('GRL')
 		final_grid_command = grid_command.format(
-			grl = '-g {0}'.format(grl) if grl else '',
+			grl = grl if grl else '',
 			)
 
-		with open('input.txt','w') as f:
-			for input_dataset in contents.get('datasets'):
-				f.write(input_dataset+'\n')
-
-
-		final_prun_command = prun_command.format(
-			final_grid_command=final_grid_command,
-			output=output
-			merge='--mergeOutput' if merge else '',
-			)
-
-		print final_prun_command
-		print call(final_prun_command).strip()
+		gC = gridCommand
+		if GRLXML: gC+= ' -g {GRLXML}'.format(GRLXML=GRLXML)
+		with open('inDsTxt.txt','w') as f:
+			for __input__ in contents.get('datasets'):
+				f.write(__input__+'\n')
+		if GRLXML: i+= ',./'+GRLXML
+		pC = prunCommand.format(gridCommand = gC, __input__='inDsTxt.txt', __output__ = __output__,includes=i,ngb = args.NGB,nf=args.NF,merge=merge)
+		print pC
+		result,error = call(pC)
+		print result
+		os.remove('inDsTxt.txt')
 
 	os.chdir(cwd)
 #=======================================================================================================
