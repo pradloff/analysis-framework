@@ -60,7 +60,7 @@ def call_analyze_condor(
 		output,
 		entries=entries,
 		num_processes=num_processes,
-		keep,
+		keep=keep,
 		)
 
 def call_analyze_slice_condor(
