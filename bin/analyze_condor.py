@@ -484,8 +484,8 @@ if __name__ == '__main__':
 		grl = args.GRL,
 		num_processes=args.PROCESSES,
 		output = args.OUTPUT,
-		entries = args.ENTRIES
-		keep=args.KEEP
+		entries = args.ENTRIES,
+		keep=args.KEEP,
 		)	
 
 	sys.exit()
