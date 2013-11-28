@@ -74,7 +74,7 @@ def call_grid(
 		keep='--keep' if keep else '',
 		)
 	
-	else: prun_command = 'prun --exec "{final_grid_command}" --rootVer="5.34.07" --cmtConfig="x86_64-slc5-gcc43-opt" --outputs="skim.root" --inDsTxt=input.txt --outDS={output} --useContElementBoundary{merge}'
+	prun_command = 'prun --exec "{final_grid_command}" --rootVer="5.34.07" --cmtConfig="x86_64-slc5-gcc43-opt" --outputs="skim.root" --inDsTxt=input.txt --outDS={output} --useContElementBoundary{merge}'
 
 	with open(grid_input) as f: dataset = json.load(f)
 	
