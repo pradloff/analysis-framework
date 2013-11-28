@@ -59,7 +59,7 @@ def call_analyze_condor(
 		files_abs_path,
 		output,
 		entries=entries,
-		num_processes=num_processes
+		num_processes=num_processes,
 		keep,
 		)
 
