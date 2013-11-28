@@ -70,7 +70,7 @@ def call_grid(
 		module=module_name,
 		analysis=analysis_name,
 		tree=tree,
-		processes=num_processes
+		processes=num_processes,
 		keep='--keep' if keep else '',
 		)
 	
