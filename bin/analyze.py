@@ -5,7 +5,7 @@ import sys
 from common.analysis import analysis
 import traceback
 import ROOT
-from pchain import generate_dictionaries
+from common.pchain import generate_dictionaries
 import shutil
 from time import sleep, time
 from distutils.dir_util import mkpath
