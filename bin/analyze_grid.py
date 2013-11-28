@@ -91,7 +91,7 @@ def call_grid(
 
 		final_prun_command = prun_command.format(
 			final_grid_command=final_grid_command,
-			output=output
+			output=output,
 			merge='--mergeOutput' if merge else '',
 			)
 
