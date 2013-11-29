@@ -10,6 +10,7 @@ from distutils.dir_util import mkpath
 import string
 import random
 from common.external import call
+import tarfile
 
 def call_grid(
 	module_name,
@@ -41,15 +42,6 @@ def call_grid(
 
 	analysis_instance = analysis_constructor()
 
-	required_directories = []
-
-	for event_function in analysis_instance.event_functions:
-		for required_directory in event_function.required_directories:
-			if not os.path.exists(required_directory): raise OSError('Required directory for grid submission not found: {0}'.format(required_directory))
-			elif os.path.abspath(required_directory) not in required_directories: required_directories.append(os.path.abspath(required_directory))
-			else: pass #directory already requested by previous event function
-	#required_directories.append(os.getenv('ANALYSISFRAMEWORK'))
-
 	while True:
 		directory = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
 		if directory not in os.listdir('.'):
@@ -60,13 +52,15 @@ def call_grid(
 	os.chdir(directory)
 
 	shutil.copytree(os.getenv('ANALYSISFRAMEWORK'),'analysis-framework')
-	os.chdir('analysis-framework')
-	for directory in required_directories:
-		shutil.copytree(directory,directory)
+	shutil.copytree(os.getenv('ANALYSISHOME'),'analyses')
 
 	#create tarball of working directory
+	tarball = tarfile.open('send.tar.gz','w:gz')
+	tarball.add('analysis-framework')
+	tarball.add('analyses')
+	tarball.close()
 
-	grid_command = 'echo %IN | sed \'s/,/\\n/g\' | sed \'s/ //g\' > input.txt; source analysis-framework/setup.sh; source analysis-framework/analyses/setup.sh; analyze.py -m {module} -a {analysis} -t input.txt -o skim.root -p {processes} -n {tree}{keep}{grl}'.format(
+	grid_command = 'echo %IN | sed \'s/,/\\n/g\' | sed \'s/ //g\' > input.txt; source analysis-framework/setup.sh; source analyses/setup.sh; analyze.py -m {module} -a {analysis} -t input.txt -o skim.root -p {processes} -n {tree}{keep}{grl}'.format(
 		module=module_name,
 		analysis=analysis_name,
 		tree=tree,
@@ -74,7 +68,7 @@ def call_grid(
 		keep='--keep' if keep else '',
 		)
 	
-	prun_command = 'prun --exec "{final_grid_command}" --rootVer="5.34.07" --cmtConfig="x86_64-slc5-gcc43-opt" --outputs="skim.root" --inDsTxt=input.txt --outDS={output} --useContElementBoundary{merge}'
+	prun_command = 'prun --exec "{final_grid_command}" --rootVer="5.34.07" --cmtConfig="x86_64-slc5-gcc43-opt" --outputs="skim.root" --inDsTxt=input.txt --outDS={output} --inTarBall=send.tar.gz --useContElementBoundary{merge}'
 
 	with open(grid_input) as f: dataset = json.load(f)
 	
@@ -96,7 +90,7 @@ def call_grid(
 			)
 
 		print final_prun_command
-		print call(final_prun_command).strip()
+		#print call(final_prun_command).strip()
 
 	os.chdir(cwd)
 #=======================================================================================================
