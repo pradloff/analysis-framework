@@ -24,7 +24,7 @@ def call_grid(
 	merge=False,
 	):
 
-	with open(grid_input) as f: dataset = json.load(f)
+	with open(grid_input) as f: grid_data = json.load(f)
 
 	cwd = os.getcwd()
 
@@ -75,7 +75,7 @@ def call_grid(
 
 	os.chdir(directory)
 
-	grl = contents.get('GRL')
+	grl = grid_data.get('GRL')
 
 	grid_command = 'echo %IN | sed \'s/,/\\n/g\' | sed \'s/ //g\' > input.txt; source analysis-framework/setup.sh; source {analysis_home}/setup.sh; analyze.py -m {module} -a {analysis} -t input.txt -o skim.root -p {processes} -n {tree}{keep}{{grl}}'.format(
 		module=module_name,
@@ -89,7 +89,7 @@ def call_grid(
 	
 	prun_command = 'prun --exec "{final_grid_command}" --rootVer="5.34.07" --cmtConfig="x86_64-slc5-gcc43-opt" --outputs="skim.root" --inDsTxt=input.txt --outDS={output} --inTarBall=send.tar.gz --useContElementBoundary{merge}'
 
-	for output,contents in dataset.items():
+	for output,contents in grid_data.items():
 
 		with open('input.txt','w') as f:
 			for input_dataset in contents.get('datasets'):
