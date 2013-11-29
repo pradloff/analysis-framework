@@ -73,6 +73,8 @@ def call_grid(
 	tarball.add(os.path.basename(analysis_home))
 	tarball.close()
 
+	os.chdir(directory)
+
 	grid_command = 'echo %IN | sed \'s/,/\\n/g\' | sed \'s/ //g\' > input.txt; source analysis-framework/setup.sh; source {analysis_home}/setup.sh; analyze.py -m {module} -a {analysis} -t input.txt -o skim.root -p {processes} -n {tree}{keep}{{grl}}'.format(
 		module=module_name,
 		analysis=analysis_name,
