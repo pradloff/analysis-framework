@@ -89,10 +89,10 @@ def call_grid(
 	
 	prun_command = 'prun --exec "{grid_command}" --rootVer="5.34.07" --cmtConfig="x86_64-slc5-gcc43-opt" --outputs="skim.root" --inDsTxt=input.txt --outDS={output} --inTarBall=send.tar.gz --useContElementBoundary{merge}'
 
-	for output,contents in grid_data.items():
+	for output_name,input_datasets in grid_data.get('datasets').items():
 
 		with open('input.txt','w') as f:
-			for input_dataset in contents.get('datasets'):
+			for input_dataset in input_datasets:
 				f.write(input_dataset+'\n')
 
 
