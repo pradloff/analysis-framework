@@ -69,7 +69,7 @@ class in_grl(event_function):
 			]
 
 	def __call__(self,event):
-		if event
+		if event.is_mc: return
 		if event.RunNumber in self.grl:
 			if event.lbn in self.grl.get(event.RunNumber): return
 		event.__break__ = True
