@@ -57,12 +57,13 @@ def call_grid(
 	shutil.copytree(os.getenv('ANALYSISHOME'),'analyses')
 
 	#create tarball of working directory
+	print 'Creating tarball'
 	tarball = tarfile.open('send.tar.gz','w:gz')
 	tarball.add('analysis-framework')
 	tarball.add('analyses')
 	tarball.close()
 
-	grid_command = 'echo %IN | sed \'s/,/\\n/g\' | sed \'s/ //g\' > input.txt; source analysis-framework/setup.sh; source analyses/setup.sh; analyze.py -m {module} -a {analysis} -t input.txt -o skim.root -p {processes} -n {tree}{keep}{grl}'.format(
+	grid_command = 'echo %IN | sed \'s/,/\\n/g\' | sed \'s/ //g\' > input.txt; source analysis-framework/setup.sh; source analyses/setup.sh; analyze.py -m {module} -a {analysis} -t input.txt -o skim.root -p {processes} -n {tree}{keep}\{grl\}'.format(
 		module=module_name,
 		analysis=analysis_name,
 		tree=tree,
