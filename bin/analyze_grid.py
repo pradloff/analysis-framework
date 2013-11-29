@@ -66,8 +66,11 @@ def call_grid(
 	#create tarball of working directory
 	print 'Creating tarball'
 	tarball = tarfile.open('send.tar.gz','w:gz')
-	tarball.add(analysis_framework)
-	tarball.add(analysis_home)
+
+	os.chdir(analysis_framework+'/../')
+	tarball.add(os.path.basename(analysis_framework))
+	os.chdir(analysis_home+'/../')
+	tarball.add(os.path.basename(analysis_home))
 	tarball.close()
 
 	grid_command = 'echo %IN | sed \'s/,/\\n/g\' | sed \'s/ //g\' > input.txt; source analysis-framework/setup.sh; source {analysis_home}/setup.sh; analyze.py -m {module} -a {analysis} -t input.txt -o skim.root -p {processes} -n {tree}{keep}{{grl}}'.format(
@@ -76,7 +79,7 @@ def call_grid(
 		tree=tree,
 		processes=num_processes,
 		analysis_home=os.path.basename(analysis_home),
-		keep='--keep' if keep else '',
+		keep=' --keep' if keep else '',
 		)
 	
 	prun_command = 'prun --exec "{final_grid_command}" --rootVer="5.34.07" --cmtConfig="x86_64-slc5-gcc43-opt" --outputs="skim.root" --inDsTxt=input.txt --outDS={output} --inTarBall=send.tar.gz --useContElementBoundary{merge}'
