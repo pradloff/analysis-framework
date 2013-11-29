@@ -87,7 +87,7 @@ def call_grid(
 		grl = ' -g {0}'.format(' '.join(grl)) if grl else '',
 		)
 	
-	prun_command = 'prun --exec "{grid_command}" --rootVer="5.34.07" --cmtConfig="x86_64-slc5-gcc43-opt" --outputs="skim.root" --inDsTxt=input.txt --outDS={output} --inTarBall=send.tar.gz --useContElementBoundary{merge}'
+	prun_command = 'prun --exec "{grid_command}" --rootVer="5.34.07" --cmtConfig="x86_64-slc5-gcc43-opt" --outputs="skim.root" --inDsTxt=input.txt --outDS={output_name} --inTarBall=send.tar.gz --useContElementBoundary{merge}'
 
 	for output_name,input_datasets in grid_data.get('datasets').items():
 
@@ -98,7 +98,7 @@ def call_grid(
 
 		final_prun_command = prun_command.format(
 			grid_command=grid_command,
-			output=output,
+			output_name=output_name,
 			merge=' --mergeOutput' if merge else '',
 			)
 
