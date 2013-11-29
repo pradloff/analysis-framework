@@ -118,7 +118,7 @@ if __name__ == '__main__':
 	parser.add_argument('-m','--module',default=None,dest='MODULE',help='Module containing analysis class.')
 	parser.add_argument('-a','--analysis',default=None,dest='ANALYSIS',help='Name of analysis to use.')
 	parser.add_argument('-n','--tree',default='physics',dest='TREE',help='TTree name which contains event information.')
-	parser.add_argument('-g','--grl',default=None,dest='GRL',help='Good run list XML file to use.')
+	parser.add_argument('-g','--grl',default=[],dest='GRL',nargs='+',help='Good run list(s) XML file to use.')
 	parser.add_argument('-p','--processes',default=2,dest='PROCESSES',type=int,help='Number of processes to use.')
 	parser.add_argument('--keep',default=False,dest='KEEP',action='store_true',help='Keep all branches, default False')
 	parser.add_argument('--grid',default=None,dest='GRID',help='Similar to [-t --textinput] except containing datasets on grid.  Organize datasets in json file, indexed by output dataset name.')

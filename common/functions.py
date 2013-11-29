@@ -7,7 +7,6 @@ class event_function():
 		self.required_branches = []
 		self.keep_branches = []
 		self.create_branches = {}
-		self.required_directories = []
 	
 	def __call__(self,event):
 		return

@@ -53,16 +53,23 @@ class compute_mc_weight(event_function):
 #apply grl
 class in_grl(event_function):
 
-	def __init__(self,grl_xml):
+	def __init__(self,grl_xmls):
 		event_function.__init__(self)
 
-		self.grl = parse_grl_xml(grl_xml)
+		self.grl = {}
+
+		analysis_home = os.getenv('ANALYSISHOME')
+
+		for grl_xml in grl_xmls:
+			self.grl.update(parse_grl_xml('{0}/data/{1}'.format(analysis_home,grl_xml)))
+
 		self.required_branches += [
 			'RunNumber',
 			'lbn',
 			]
 
 	def __call__(self,event):
+		if event
 		if event.RunNumber in self.grl:
 			if event.lbn in self.grl.get(event.RunNumber): return
 		event.__break__ = True

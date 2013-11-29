@@ -14,7 +14,7 @@ class analysis():
 
 		self.files = []
 		self.tree = 'physics'
-		self.grl = None
+		self.grl = []
 
 		self.keep_all = False
 	
