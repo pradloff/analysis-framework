@@ -75,6 +75,8 @@ def call_grid(
 
 	os.chdir(directory)
 
+	grl = contents.get('GRL')
+
 	grid_command = 'echo %IN | sed \'s/,/\\n/g\' | sed \'s/ //g\' > input.txt; source analysis-framework/setup.sh; source {analysis_home}/setup.sh; analyze.py -m {module} -a {analysis} -t input.txt -o skim.root -p {processes} -n {tree}{keep}{{grl}}'.format(
 		module=module_name,
 		analysis=analysis_name,
@@ -82,15 +84,12 @@ def call_grid(
 		processes=num_processes,
 		analysis_home=os.path.basename(analysis_home),
 		keep=' --keep' if keep else '',
+		grl = ' -g {0}'.format(' '.join(grl)) if grl else '',
 		)
 	
 	prun_command = 'prun --exec "{final_grid_command}" --rootVer="5.34.07" --cmtConfig="x86_64-slc5-gcc43-opt" --outputs="skim.root" --inDsTxt=input.txt --outDS={output} --inTarBall=send.tar.gz --useContElementBoundary{merge}'
 
 	for output,contents in dataset.items():
-		grl = contents.get('GRL')
-		final_grid_command = grid_command.format(
-			grl = ' -g {0}'.format(grl) if grl else '',
-			)
 
 		with open('input.txt','w') as f:
 			for input_dataset in contents.get('datasets'):
@@ -98,9 +97,9 @@ def call_grid(
 
 
 		final_prun_command = prun_command.format(
-			final_grid_command=final_grid_command,
+			grid_command=grid_command,
 			output=output,
-			merge='--mergeOutput' if merge else '',
+			merge=' --mergeOutput' if merge else '',
 			)
 
 		print final_prun_command

@@ -325,7 +325,7 @@ if __name__ == '__main__':
 	parser.add_argument('--keep',default=False,dest='KEEP',action='store_true',help='Keep all branches, default False')
 
 	args = parser.parse_args()
-		
+	
 	allargs = True
 	
 	if not any([args.INPUT,args.TEXTINPUT,args.DATASET,args.GRID]): print 'Must include some form of input [-i, --input], [-t, --textinput]'; allargs = False
