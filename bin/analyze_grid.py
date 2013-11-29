@@ -23,8 +23,14 @@ def call_grid(
 	merge=False,
 	):
 
+	with open(grid_input) as f: dataset = json.load(f)
+
 	cwd = os.getcwd()
-	os.chdir(os.getenv('ANALYSISHOME'))
+
+	analysis_home = os.getenv('ANALYSISHOME')
+	analysis_framework = os.getenv('ANALYSISFRAMEWORK')
+
+	os.chdir(analysis_home)
 
 	if not os.path.exists(module_name):
 		print '$ANALYSISHOME/analyses/{0} not found'.format(module_name)
@@ -53,28 +59,27 @@ def call_grid(
 
 	os.chdir(directory)
 
-	shutil.copytree(os.getenv('ANALYSISFRAMEWORK'),'analysis-framework')
-	shutil.copytree(os.getenv('ANALYSISHOME'),'analyses')
+	#shutil.copytree(os.getenv('ANALYSISFRAMEWORK'),'analysis-framework')
+	#shutil.copytree(os.getenv('ANALYSISHOME'),'analyses')
 
 	#create tarball of working directory
 	print 'Creating tarball'
 	tarball = tarfile.open('send.tar.gz','w:gz')
-	tarball.add('analysis-framework')
-	tarball.add('analyses')
+	tarball.add(analysis_framework)
+	tarball.add(analysis_home)
 	tarball.close()
 
-	grid_command = 'echo %IN | sed \'s/,/\\n/g\' | sed \'s/ //g\' > input.txt; source analysis-framework/setup.sh; source analyses/setup.sh; analyze.py -m {module} -a {analysis} -t input.txt -o skim.root -p {processes} -n {tree}{keep}{{grl}}'.format(
+	grid_command = 'echo %IN | sed \'s/,/\\n/g\' | sed \'s/ //g\' > input.txt; source analysis-framework/setup.sh; source {analysis_home}/setup.sh; analyze.py -m {module} -a {analysis} -t input.txt -o skim.root -p {processes} -n {tree}{keep}{{grl}}'.format(
 		module=module_name,
 		analysis=analysis_name,
 		tree=tree,
 		processes=num_processes,
+		analysis_home=os.path.basename(analysis_home),
 		keep='--keep' if keep else '',
 		)
 	
 	prun_command = 'prun --exec "{final_grid_command}" --rootVer="5.34.07" --cmtConfig="x86_64-slc5-gcc43-opt" --outputs="skim.root" --inDsTxt=input.txt --outDS={output} --inTarBall=send.tar.gz --useContElementBoundary{merge}'
 
-	with open(grid_input) as f: dataset = json.load(f)
-	
 	for output,contents in dataset.items():
 		grl = contents.get('GRL')
 		final_grid_command = grid_command.format(
