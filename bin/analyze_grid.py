@@ -104,6 +104,8 @@ def call_grid(
 
 		print final_prun_command
 		#print call(final_prun_command).strip()
+	os.chdir(cwd)
+	shutil.rmtree(directory)
 
 #=======================================================================================================
 	
