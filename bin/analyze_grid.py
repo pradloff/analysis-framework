@@ -42,6 +42,8 @@ def call_grid(
 
 	analysis_instance = analysis_constructor()
 
+	os.chdir(cwd)
+
 	while True:
 		directory = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
 		if directory not in os.listdir('.'):
@@ -92,7 +94,6 @@ def call_grid(
 		print final_prun_command
 		#print call(final_prun_command).strip()
 
-	os.chdir(cwd)
 #=======================================================================================================
 	
 if __name__ == '__main__':
