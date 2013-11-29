@@ -84,7 +84,7 @@ def call_grid(
 	for output,contents in dataset.items():
 		grl = contents.get('GRL')
 		final_grid_command = grid_command.format(
-			grl = '-g {0}'.format(grl) if grl else '',
+			grl = ' -g {0}'.format(grl) if grl else '',
 			)
 
 		with open('input.txt','w') as f:
