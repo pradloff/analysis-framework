@@ -46,9 +46,9 @@ def include(package,files):
 			raise OSError('file not found: $ANALYSISHOME/{0}/{1}'.format(package,file_))
 		ROOT.gROOT.ProcessLine('.L {0}'.format(file_))
 	
-def load(package,prerequesites=None,verbose=False,clean=False,overwrite=False):
+def load(package,clean=False,overwrite=False):
 	if not prerequesites: prerequesites = []
-	for prerequesite in prerequesites: self.Load(prerequesite)
+	for prerequesite in prerequesites: load(prerequesite)
 	if verbose == True: print 'Loading {0}'.format(package)
 	cwd = os.getcwd()
 	home = os.getenv('ANALYSISHOME')
@@ -65,7 +65,17 @@ def load(package,prerequesites=None,verbose=False,clean=False,overwrite=False):
 	os.chdir(cmtPath)
 	
 	make_default(package,overwrite=overwrite)
+
 	if clean: call('make -f Makefile.RootCore clean')
+
+	#get dependencies and load them first
+	with open('Makefile.RootCore') as f:
+		for line in f.readlines():
+			if line.startswith('PACKAGE_DEP'): 
+				dependencies = line.split('=')[-1].split()
+
+	for dependency in dependencies: load(dependency,clean=clean)
+
 	result = call('make -f Makefile.RootCore')
 	
 	standalonePath = packagePath+'/StandAlone'
