@@ -64,6 +64,9 @@ def load(package,clean=False,verbose=False,level=0):
 		raise OSError('cmt directory not found in $ANALYSISHOME/external/{0}'.format(package))
 	os.chdir(cmtPath)
 
+	if package=='egammaAnalysisUtils' and not level:
+		print os.listdir('../StandAlone')
+
 	if clean: call('make -f Makefile.RootCore clean',verbose=verbose)
 
 	#get dependencies and load them first
