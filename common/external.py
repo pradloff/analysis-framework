@@ -50,7 +50,7 @@ def include(package,files):
 def load(package,clean=False,verbose=False,level=0,ignores=[]):
 
 	if verbose: print '{0}Loading package {1}'.format('\t'*level, package)
-	if package in ignores: return
+	if package in ignores: return ignores
 
 	cwd = os.getcwd()
 	home = os.getenv('ANALYSISHOME')
