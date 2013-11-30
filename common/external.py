@@ -2,9 +2,6 @@ import ROOT
 import os
 import subprocess
 
-#!/usr/bin/python
-import subprocess
-import os
 def check_output(*popenargs, **kwargs):
     process = subprocess.Popen(stdout=subprocess.PIPE, *popenargs, **kwargs)
     output, unused_err = process.communicate()
@@ -77,7 +74,5 @@ def load(package,prerequesites=None,verbose=False,clean=False,overwrite=False):
 		raise OSError('StandAlone directory not found in $ANALYSISHOME/external/{0}'.format(package))
 
 	os.chdir(standalonePath)
-	import code; code.interact(local=locals())
-	print os.listdir('.')
-	ROOT.gSystem.Load('lib{0}.so'.format(package))
+	ROOT.gSystem.Load(os.path.abspath('lib{0}.so'.format(package)))
 	os.chdir(cwd)
