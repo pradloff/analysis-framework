@@ -75,7 +75,7 @@ def load(package,clean=False,verbose=False,level=0,ignores=[]):
 			if line.startswith('PACKAGE_DEP'): 
 				dependencies = line.split('=')[-1].split()
 
-	for dependency in dependencies: load(dependency,verbose=verbose,clean=clean,level=level+1)
+	for dependency in dependencies: ignores = load(dependency,verbose=verbose,clean=clean,level=level+1,ignores=ignores)
 
 	result = call('make -f Makefile.RootCore',verbose=verbose)
 	
