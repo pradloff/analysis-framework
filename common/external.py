@@ -67,6 +67,7 @@ def load(package,clean=False,overwrite=False):
 	if clean: call('make -f Makefile.RootCore clean')
 
 	#get dependencies and load them first
+	dependencies = []
 	with open('Makefile.RootCore') as f:
 		for line in f.readlines():
 			if line.startswith('PACKAGE_DEP'): 
