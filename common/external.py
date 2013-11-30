@@ -47,9 +47,11 @@ def include(package,files):
 			raise OSError('file not found: $ANALYSISHOME/{0}/{1}'.format(package,file_))
 		ROOT.gROOT.ProcessLine('.L {0}'.format(file_))
 	
-def load(package,clean=False,verbose=False,level=0):
+def load(package,clean=False,verbose=False,level=0,ignores=[]):
 
 	if verbose: print '{0}Loading package {1}'.format('\t'*level, package)
+	if package in ignores: return
+
 	cwd = os.getcwd()
 	home = os.getenv('ANALYSISHOME')
 	packagePath = '{0}/external/{1}'.format(home,package)
@@ -88,4 +90,4 @@ def load(package,clean=False,verbose=False,level=0):
 	os.chdir(standalonePath)
 	ROOT.gSystem.Load(os.path.abspath('lib{0}.so'.format(package)))
 	os.chdir(cwd)
-	sleep(0.1)
+	ignores.append(package)
