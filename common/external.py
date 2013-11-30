@@ -47,9 +47,7 @@ def include(package,files):
 		ROOT.gROOT.ProcessLine('.L {0}'.format(file_))
 	
 def load(package,clean=False,overwrite=False):
-	if not prerequesites: prerequesites = []
-	for prerequesite in prerequesites: load(prerequesite)
-	if verbose == True: print 'Loading {0}'.format(package)
+
 	cwd = os.getcwd()
 	home = os.getenv('ANALYSISHOME')
 	packagePath = '{0}/external/{1}'.format(home,package)
