@@ -77,5 +77,7 @@ def load(package,prerequesites=None,verbose=False,clean=False,overwrite=False):
 		raise OSError('StandAlone directory not found in $ANALYSISHOME/external/{0}'.format(package))
 
 	os.chdir(standalonePath)
+	import code; code.interact(local=locals())
+	print os.listdir('.')
 	ROOT.gSystem.Load('lib{0}.so'.format(package))
 	os.chdir(cwd)
