@@ -328,7 +328,7 @@ if __name__ == '__main__':
 	
 	allargs = True
 	
-	if not any([args.INPUT,args.TEXTINPUT,args.DATASET,args.GRID]): print 'Must include some form of input [-i, --input], [-t, --textinput]'; allargs = False
+	if not any([args.INPUT,args.TEXTINPUT]): print 'Must include some form of input [-i, --input], [-t, --textinput]'; allargs = False
 	if not args.MODULE: print 'Must include name of module containing analysis [-m, --module]'; allargs = False
 	if not args.ANALYSIS: print 'Must include name of analysis [-a, --analysis]'; allargs = False
 
