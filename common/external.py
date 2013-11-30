@@ -1,6 +1,7 @@
 import ROOT
 import os
 import subprocess
+from time import sleep
 
 def check_output(*popenargs, **kwargs):
     process = subprocess.Popen(stdout=subprocess.PIPE, *popenargs, **kwargs)
@@ -84,3 +85,4 @@ def load(package,clean=False,verbose=False,level=0):
 	os.chdir(standalonePath)
 	ROOT.gSystem.Load(os.path.abspath('lib{0}.so'.format(package)))
 	os.chdir(cwd)
+	sleep(0.1)
