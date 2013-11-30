@@ -63,7 +63,7 @@ def load(package,clean=False,verbose=False,level=0):
 		raise OSError('cmt directory not found in $ANALYSISHOME/external/{0}'.format(package))
 	os.chdir(cmtPath)
 
-	if clean: call('make -f Makefile.RootCore clean')
+	if clean: call('make -f Makefile.RootCore clean',verbose=verbose)
 
 	#get dependencies and load them first
 	dependencies = []
@@ -74,7 +74,7 @@ def load(package,clean=False,verbose=False,level=0):
 
 	for dependency in dependencies: load(dependency,verbose=verbose,clean=clean,level=level+1)
 
-	result = call('make -f Makefile.RootCore')
+	result = call('make -f Makefile.RootCore',verbose=verbose)
 	
 	standalonePath = packagePath+'/StandAlone'
 	if not os.path.exists(standalonePath):
