@@ -46,8 +46,10 @@ def include(package,files):
 			raise OSError('file not found: $ANALYSISHOME/{0}/{1}'.format(package,file_))
 		ROOT.gROOT.ProcessLine('.L {0}'.format(file_))
 	
-def load(package,clean=False,overwrite=False):
+def load(package,clean=False,verbose=False):
 
+
+	if verbose: print 'Loading package {0}'.format(package)
 	cwd = os.getcwd()
 	home = os.getenv('ANALYSISHOME')
 	packagePath = '{0}/external/{1}'.format(home,package)
@@ -61,8 +63,6 @@ def load(package,clean=False,overwrite=False):
 		os.chdir(cwd)
 		raise OSError('cmt directory not found in $ANALYSISHOME/external/{0}'.format(package))
 	os.chdir(cmtPath)
-	
-	make_default(package,overwrite=overwrite)
 
 	if clean: call('make -f Makefile.RootCore clean')
 
@@ -73,7 +73,7 @@ def load(package,clean=False,overwrite=False):
 			if line.startswith('PACKAGE_DEP'): 
 				dependencies = line.split('=')[-1].split()
 
-	for dependency in dependencies: load(dependency,clean=clean)
+	for dependency in dependencies: load(dependency,verbose=verbose,clean=clean)
 
 	result = call('make -f Makefile.RootCore')
 	
