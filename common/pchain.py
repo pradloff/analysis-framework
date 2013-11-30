@@ -17,20 +17,24 @@ def generate_dictionaries():
 
 def generate_dictionaries():
 	cwd = os.getcwd()
-	if not os.path.exists('dictionaries'): os.mkdir('dictionaries')
+	try: os.mkdir('dictionaries')
+	except OSError as error:
+		if error.errno!=17: raise 
 	os.chdir('dictionaries')
-        with open('Loader.C','w') as f:
-                f.write(\
-                        """#include <vector>
-#ifdef __MAKECINT__
-#pragma link C++ class vector<vector<bool> >+;  
-#pragma link C++ class vector<vector<int> >+; 
-#pragma link C++ class vector<vector<double> >+; 
-#pragma link C++ class vector<vector<string> >+; 
-#pragma link C++ class vector<vector<unsigned int> >+; 
-#pragma link C++ class vector<vector<float> >+;
-#endif""")
-        ROOT.gROOT.ProcessLine('.L Loader.C+')
+	if not os.path.exists('Loader.C'):
+		with open('Loader.C','w') as f:
+			for line in [
+				'#include <vector>',
+				'#ifdef __MAKECINT__',
+				'#pragma link C++ class vector<vector<bool> >+;',
+				'#pragma link C++ class vector<vector<int> >+;',
+				'#pragma link C++ class vector<vector<double> >+;',
+				'#pragma link C++ class vector<vector<string> >+;',
+				'#pragma link C++ class vector<vector<unsigned int> >+;',
+				'#pragma link C++ class vector<vector<float> >+;',
+				'#endif',
+				]: f.write(line+'\n')
+        ROOT.gROOT.ProcessLine('.L {0}+'.format(os.path.abspath('Loader.C')))
 	os.chdir(cwd)
 
 #def generate_dictionaries(): pass
