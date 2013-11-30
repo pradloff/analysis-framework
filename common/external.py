@@ -91,3 +91,4 @@ def load(package,clean=False,verbose=False,level=0,ignores=[]):
 	ROOT.gSystem.Load(os.path.abspath('lib{0}.so'.format(package)))
 	os.chdir(cwd)
 	ignores.append(package)
+	return ignores
