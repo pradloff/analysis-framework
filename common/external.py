@@ -46,10 +46,9 @@ def include(package,files):
 			raise OSError('file not found: $ANALYSISHOME/{0}/{1}'.format(package,file_))
 		ROOT.gROOT.ProcessLine('.L {0}'.format(file_))
 	
-def load(package,clean=False,verbose=False):
+def load(package,clean=False,verbose=False,level=0):
 
-
-	if verbose: print 'Loading package {0}'.format(package)
+	if verbose: print '{0}Loading package {1}'.format('\t'*level, package)
 	cwd = os.getcwd()
 	home = os.getenv('ANALYSISHOME')
 	packagePath = '{0}/external/{1}'.format(home,package)
@@ -73,7 +72,7 @@ def load(package,clean=False,verbose=False):
 			if line.startswith('PACKAGE_DEP'): 
 				dependencies = line.split('=')[-1].split()
 
-	for dependency in dependencies: load(dependency,verbose=verbose,clean=clean)
+	for dependency in dependencies: load(dependency,verbose=verbose,clean=clean,level=level+1)
 
 	result = call('make -f Makefile.RootCore')
 	
