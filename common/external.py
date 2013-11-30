@@ -26,7 +26,7 @@ def make_default(package,overwrite=False):
 	with open('Makefile.RootCore','w') as f:
 		for line in [
 			'PACKAGE          = {0}'.format(package),
-			'include $(ROOTCOREDIR)/Makefile-common'
+			'include $(ROOTCOREDIR)/external/Makefile-common'
 			]: f.write(line+'\n')
 
 def call(command,args='',verbose=False):
