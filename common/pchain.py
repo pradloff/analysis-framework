@@ -72,7 +72,7 @@ class pchain():
 		for f in files:
 			if f.startswith('root://'): pass
 			elif not os.path.exists(f): raise OSError,'File {0} does not exist'.format(f)
-			tfile = ROOT.TFile(f)
+			tfile = ROOT.TFile.Open(f)
 			tree = getattr(tfile,self.tree,None)
 			if any([
 				not tree,
