@@ -33,7 +33,7 @@ def call_analyze(
 	os.chdir(os.getenv('ANALYSISHOME'))
 
 	if not os.path.exists(module_name):
-		print '$ANALYSISHOME/analyses/{0} not found'.format(module_name)
+		print '$ANALYSISHOME/{0} not found'.format(module_name)
 		return 0
 	module = '.'.join([part for part in module_name.split('/')]).rstrip('.py')
 	try:
@@ -43,7 +43,7 @@ def call_analyze(
 		print error
 		return 0	
 	if not issubclass(analysis_constructor,analysis):
-		print '{0} in $ANALYSISHOME/analyses/{1} is not an analysis type'.format(analysis_constructor,module_name)
+		print '{0} in $ANALYSISHOME/{1} is not an analysis type'.format(analysis_constructor,module_name)
 		return 0
 
 	os.chdir(cwd)
