@@ -139,7 +139,7 @@ def analyze(
 	finished = 0
 	results = []
 	while 1:
-		try: sleep(0.1)
+		try: sleep(2)
 		except KeyboardInterrupt: cleanup()
 
 		#flush logger queue
@@ -210,10 +210,12 @@ def analyze_slice(
 		sys.exit()
 
 	#print statements executed in here and in Event/Result functions are redirected to the main logger
+	print 'Patching stdout'
 	os.close(sys.stdout.fileno())
 	sys.stdout = logpatch(logger_queue,'Process number {0}: '.format(process_number),'')
 
 	#Create output
+	print 'Creating output'
 	num_processes = len(ranges)
 	if num_processes>1: output_name = '{directory}/temp_{0:0>{1}}.root'.format(process_number,int(log(num_processes-1,10))+1,directory=directory)
 	else: output_name = '{directory}/temp.root'.format(directory=directory)
@@ -224,8 +226,10 @@ def analyze_slice(
 	analysis_instance = analysis_constructor()
 	analysis_instance.tree = tree
 	analysis_instance.grl = grl
-	analysis_instance.add_file(*files)
 	analysis_instance.keep_all=keep
+	print 'Adding files'
+	analysis_instance.add_file(*files)
+
 	print 'Setting up chain'
 	try:
 		analysis_instance.add_standard_functions()
