@@ -24,6 +24,7 @@ def generate_dictionaries():
 	if not os.path.exists('Loader.C'):
 		with open('Loader.C','w') as f:
 			for line in [
+				'#include "TLorentzVector.h',
 				'#include <vector>',
 				'#ifdef __MAKECINT__',
 				'#pragma link C++ class vector<vector<bool> >+;',
@@ -32,6 +33,7 @@ def generate_dictionaries():
 				'#pragma link C++ class vector<vector<string> >+;',
 				'#pragma link C++ class vector<vector<unsigned int> >+;',
 				'#pragma link C++ class vector<vector<float> >+;',
+				'#pragma link C++ class vector<TLorentzVector>+;',
 				'#endif',
 				]: f.write(line+'\n')
         ROOT.gROOT.ProcessLine('.L {0}+'.format(os.path.abspath('Loader.C')))
