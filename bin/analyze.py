@@ -183,7 +183,7 @@ def analyze(
 		if finished==num_processes: break		
 
 	print 'Overall rate: {0} Hz'.format(round(entries/(time()-time_start),2))
-
+	"""
 	#Create path to output and output ROOT file, merge results
 	mkpath(os.path.dirname(output))
 	os.close(sys.stdout.fileno())
@@ -198,7 +198,7 @@ def analyze(
 		shutil.move(results[0], output)
 
 	cleanup()
-
+	"""
 def analyze_slice(
 	analysis_constructor,
 	tree,
@@ -226,6 +226,7 @@ def analyze_slice(
 	#cleanup function always called no matter form of exit
 	def cleanup(output,output_name,error):
 		output.Close()
+		sleep(0.5)
 		#output name will be None if there is some problem
 		result_queue.put(output_name)
 		#error will be None if there is NO problem
