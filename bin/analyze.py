@@ -92,6 +92,8 @@ def analyze(
 
 	if not entries: return 1
 
+	del analysis_instance
+
 	print 'Processing {0} entries with {1} processes'.format(entries,num_processes)
 	
 	#Result, error and log queue
@@ -139,7 +141,7 @@ def analyze(
 	finished = 0
 	results = []
 	while 1:
-		try: sleep(2)
+		try: sleep(0.01)
 		except KeyboardInterrupt: cleanup()
 
 		#flush logger queue
