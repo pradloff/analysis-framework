@@ -140,7 +140,10 @@ def analyze(
 	#Wait for processes to complete or kill them if ctrl-c
 	finished = 0
 	results = []
+	tick=0
 	while 1:
+		tick+=1
+		if not tick%1000: print 'tick'
 		try: sleep(0.01)
 		except KeyboardInterrupt: cleanup()
 
