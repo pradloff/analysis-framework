@@ -236,10 +236,12 @@ def analyze_slice(
 	print 'Adding files'
 	analysis_instance.add_file(*files)
 
-	print 'Setting up chain'
 	try:
+		print 'Adding standard functions'
 		analysis_instance.add_standard_functions()
+		print 'Setting up chain'
 		analysis_instance.setup_chain()
+		print 'Adding skim function'
 		analysis_instance.add_result_function(skim(analysis_instance))
 
 	except Exception:
