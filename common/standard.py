@@ -139,7 +139,7 @@ class skim(result_function):
 		self.results['skim'] = self.tree
 
 		for branch_name in sorted(self.analysis.keep_branches):
-			if branch_name in self.analysis.create_branches: continue
+			if self.analysis.create_branches.get(branch_name): continue
 			if branch_name not in self.pchain.get_available_branch_names(required=True):
 				raise ValueError('No matches for required branch {0}'.format(branch_name))
 			branch_type = self.pchain.branch_types[branch_name]

@@ -196,6 +196,7 @@ def analyze_slice(
 	keep,
 	):
 
+	print 'Generating dictionaries'
 	generate_dictionaries()
 
 	error = None
@@ -219,11 +220,13 @@ def analyze_slice(
 	output = ROOT.TFile(output_name,'RECREATE')
 	
 	#Create local copy of analysis
+	print 'Creating analysis'
 	analysis_instance = analysis_constructor()
 	analysis_instance.tree = tree
 	analysis_instance.grl = grl
 	analysis_instance.add_file(*files)
 	analysis_instance.keep_all=keep
+	print 'Setting up chain'
 	try:
 		analysis_instance.add_standard_functions()
 		analysis_instance.setup_chain()
@@ -235,6 +238,7 @@ def analyze_slice(
 		cleanup()
 
 	#tie results to output file
+	print 'Initializing results'
 	for result_function in analysis_instance.result_functions:
 		for result in result_function.results.values():
 			result.SetDirectory(output)
@@ -248,6 +252,7 @@ def analyze_slice(
 	start,end = ranges[process_number]
 	time_start = time()
 
+	print 'Starting looping'
 	entry=0
 	try:
 		for entry in xrange(start,end):
@@ -280,6 +285,7 @@ def analyze_slice(
 		output_name = None
 		cleanup()
 
+	print 'Handling results'
 	#Handle results
 	try:
 		for result_function in analysis_instance.result_functions:
