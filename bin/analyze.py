@@ -201,8 +201,11 @@ def analyze_slice(
 	keep,
 	):
 
-	print 'Generating dictionaries'
-	print os.getcwd()
+	#print statements executed in here and in Event/Result functions are redirected to the main logger
+	os.close(sys.stdout.fileno())
+	sys.stdout = logpatch(logger_queue,'Process number {0}: '.format(process_number),'')
+	print 'Patched stdout'
+
 	generate_dictionaries()
 
 	error = None
@@ -214,11 +217,6 @@ def analyze_slice(
 		#error will be None if there is NO problem
 		if error: error_queue.put(error)
 		sys.exit()
-
-	#print statements executed in here and in Event/Result functions are redirected to the main logger
-	#print 'Patching stdout'
-	#os.close(sys.stdout.fileno())
-	#sys.stdout = logpatch(logger_queue,'Process number {0}: '.format(process_number),'')
 
 	#Create output
 	print 'Creating output'

@@ -38,23 +38,18 @@ class analysis():
 		self.add_result_function(cutflow(self.event_functions))
 		
 	def setup_chain(self):
-		print 1
 		self.pchain = pchain(self.tree)
 		self.pchain.add_files(self.files)
-		print 2
 		for event_function in self.event_functions:
 			self.required_branches += event_function.required_branches
 			self.create_branches.update(event_function.create_branches)
 			self.keep_branches += event_function.keep_branches
 			self.pchain.create_branches(event_function.create_branches.keys(),event_function.__class__.__name__)
 		if self.keep_all:
-			print 3
 			for branch_name in self.pchain.get_available_branch_names():
 				if branch_name in self.keep_branches: continue
 				self.keep_branches.append(branch_name)
-		print 4
 		self.pchain.request_branches(self.required_branches)
-		print 5
 		self.pchain.request_branches(self.keep_branches)
 
 

@@ -70,26 +70,21 @@ class pchain():
 
 	def add_files(self,files):
 		for f in files:
-			print 'trying to add {0}'.format(f)
 			if f.startswith('root://'): pass
 			elif not os.path.exists(f): raise OSError,'File {0} does not exist'.format(f)
-			print 'trying to open {0}'.format(f)
 			tfile = ROOT.TFile.Open(f)
-			print 'trying to get tree'
 			tree = getattr(tfile,self.tree,None)
 			if any([
 				not tree,
 				not isinstance(tree,ROOT.TTree),
 				]): raise ValueError,'No matches for TTree "{0}" in file {1}.'.format(self.tree,f)
 			self.files.append(f)
-			print 'trying to get branches'
 			self.files_branches[f] = [branch.GetName() for branch in tree.GetListOfBranches()]
 			for leaf in tree.GetListOfLeaves():
 				if leaf.GetName() not in self.branch_types: self.branch_types[leaf.GetName()] = leaf.GetTypeName()
 				elif leaf.GetTypeName()!=self.branch_types[leaf.GetName()]:
 					raise TypeError('Branch typing for {0} changes in file {1}'.format(leaf.GetName(),f))
 			tfile.Close()
-			print 'trying to add to chain'
 			self.chain.Add(f)
 
 	def get_available_branch_names(self,required=True):
