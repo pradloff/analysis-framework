@@ -143,7 +143,7 @@ def analyze(
 	tick=0
 	while 1:
 		tick+=1
-		if not tick%1000: print 'tick'
+		#if not tick%1000: print 'tick'
 		try: sleep(0.01)
 		except KeyboardInterrupt: cleanup()
 
