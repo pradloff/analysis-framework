@@ -75,6 +75,7 @@ class pchain():
 			elif not os.path.exists(f): raise OSError,'File {0} does not exist'.format(f)
 			print 'trying to open {0}'.format(f)
 			tfile = ROOT.TFile.Open(f)
+			print 'trying to get tree'
 			tree = getattr(tfile,self.tree,None)
 			if any([
 				not tree,
