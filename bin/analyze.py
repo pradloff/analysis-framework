@@ -166,6 +166,18 @@ def analyze(
 			while not error_queue.empty():
 				print error_queue.get()
 				cleanup()
+
+			result =  result_queue.get()
+			if result is None:
+				sleep(1)
+				while not logger_queue.empty():
+					print logger_queue.get()
+				#flush error queue
+				while not error_queue.empty():
+					print error_queue.get()
+					cleanup()
+				print 'An unknown error occured'
+				cleanup()				
 			results.append(result_queue.get())
 
 		if finished==num_processes: break		
@@ -210,7 +222,7 @@ def analyze_slice(
 
 	error = None
 	#cleanup function always called no matter form of exit
-	def cleanup():
+	def cleanup(output,output_name,error):
 		output.Close()
 		#output name will be None if there is some problem
 		result_queue.put(output_name)
@@ -245,7 +257,7 @@ def analyze_slice(
 	except Exception:
 		error = 'Error occured in initialization\n'+traceback.format_exc()
 		output_name = None
-		cleanup()
+		cleanup(output,output_name,error)
 
 	#tie results to output file
 	print 'Initializing results'
@@ -293,7 +305,7 @@ def analyze_slice(
 	except Exception:
 		error = 'Exception caught in entry {0}\n'.format(entry)+traceback.format_exc()
 		output_name = None
-		cleanup()
+		cleanup(output,output_name,error)
 
 	print 'Handling results'
 	#Handle results
@@ -317,12 +329,12 @@ def analyze_slice(
 	except Exception:
 		error = 'Exception caught while handling results\n'+traceback.format_exc()
 		output_name = None
-		cleanup()
+		cleanup(output,output_name,error)
 
 	print '{0}% complete, {1} Hz'.format(round(done,2), round(rate,2))	
 	print 'Sending output {0}'.format(output_name)
 
-	cleanup()
+	cleanup(output,output_name,error)
 	
 if __name__ == '__main__':
 
