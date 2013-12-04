@@ -77,7 +77,7 @@ def call_grid(
 
 	grl = grid_data.get('GRL')
 
-	grid_command = 'echo %IN | sed \'s/,/\\n/g\' | sed \'s/ //g\' > input.txt; source analysis-framework/setup.sh; source {analysis_home}/setup.sh; analyze.py -m {module} -a {analysis} -t input.txt -o skim.root -p {processes} -n {tree}{keep}{grl}'.format(
+	grid_command = 'echo %IN | sed \'s/,/\\n/g\' | sed \'s/ //g\' > input.txt; source analysis-framework/setup.sh; source {analysis_home}/setup.sh; python {analysis_home}/make_externals.py; analyze.py -m {module} -a {analysis} -t input.txt -o skim.root -p {processes} -n {tree}{keep}{grl}'.format(
 		module=module_name,
 		analysis=analysis_name,
 		tree=tree,
@@ -102,8 +102,8 @@ def call_grid(
 			merge=' --mergeOutput' if merge else '',
 			)
 
-		print final_prun_command
-		#print call(final_prun_command).strip()
+		#print final_prun_command
+		print call(final_prun_command).strip()
 	os.chdir(cwd)
 	shutil.rmtree(directory)
 
@@ -124,6 +124,7 @@ if __name__ == '__main__':
 	parser.add_argument('--keep',default=False,dest='KEEP',action='store_true',help='Keep all branches, default False')
 	parser.add_argument('--grid',default=None,dest='GRID',help='Similar to [-t --textinput] except containing datasets on grid.  Organize datasets in json file, indexed by output dataset name.')
 	parser.add_argument('--merge',dest='MERGE',action='store_true',help='Merge output of grid jobs.')
+	parser.add_argument('--jobsize',default=1,type=int,dest='JOBSIZE',help='Job size in giga-bytes.')
 
 	args = parser.parse_args()
 		
