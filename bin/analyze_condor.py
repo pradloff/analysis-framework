@@ -83,6 +83,7 @@ def call_analyze_slice_condor(
 	analysis_home = os.getenv('ANALYSISHOME')
 
 	sys.stdout = logpatch(logger_queue,'Process number {0}: '.format(process_number),'')
+	sys.stderr = logpatch(logger_queue,'Process number {0}: '.format(process_number),'')
 
 	num_processes = len(ranges)
 	if num_processes>1: condor_dir = '{directory}/condor_{0:0>{1}}'.format(process_number,int(log(num_processes-1,10))+1,directory=directory)
@@ -328,6 +329,7 @@ def analyze_slice_condor(
 
 	#print statements executed in here and in Event/Result functions are redirected to the log file
 	sys.stdout = logpatch_file(logger_file)
+	sys.stderr = logpatch_file(logger_file)
 
 	#Create output
 	output = ROOT.TFile(output_name,'RECREATE')
