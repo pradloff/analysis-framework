@@ -12,6 +12,7 @@ def generate_dictionaries():
 		("std::vector<std::vector<float> >","vector"),
 		("std::vector<std::vector<int> >","vector"),
 		("std::vector<std::vector<unsigned int> >","vector"),
+		("std::vector<TLorentzVector>","vector"),
 		]: ROOT.gInterpreter.GenerateDictionary(name,base)
 	os.chdir(cwd)
 
