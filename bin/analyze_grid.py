@@ -77,7 +77,7 @@ def call_grid(
 
 	grl = grid_data.get('GRL')
 
-	grid_command = 'echo %IN | sed \'s/,/\\n/g\' | sed \'s/ //g\' > input.txt; source analysis-framework/setup.sh; source {analysis_home}/setup.sh; python {analysis_home}/make_externals.py; analyze.py -m {module} -a {analysis} -t input.txt -o skim.root -p {processes} -n {tree}{keep}{grl}'.format(
+	grid_command = 'source analysis-framework/setup.sh; source {analysis_home}/setup.sh; analyze.py -m {module} -a {analysis} -i %IN -o skim.root -p {processes} -n {tree}{keep}{grl}'.format(
 		module=module_name,
 		analysis=analysis_name,
 		tree=tree,
@@ -87,17 +87,22 @@ def call_grid(
 		grl = ' -g {0}'.format(' '.join(grl)) if grl else '',
 		)
 	
-	prun_command = 'prun --exec "{grid_command}" --rootVer="5.34.07" --cmtConfig="x86_64-slc5-gcc43-opt" --outputs="skim.root" --inDsTxt=input.txt --outDS={output_name} --inTarBall=send.tar.gz --useContElementBoundary{merge}'
+	make_command = 'source analysis-framework/setup.sh; source {analysis_home}/setup.sh; python {analysis_home}/make_externals.py'.format(
+		analysis_home=os.path.basename(analysis_home),
+		)
+
+	prun_command = 'prun --bexec="{make_command}" --exec "{grid_command}" --rootVer="5.34.07" --cmtConfig="x86_64-slc5-gcc43-opt" --outputs="skim.root" --inDsTxt=input_datasets.txt --outDS={output_name} --inTarBall=send.tar.gz --useContElementBoundary{merge}'
 
 	for output_name,input_datasets in grid_data.get('datasets').items():
 
-		with open('input.txt','w') as f:
+		with open('input_datasets.txt','w') as f:
 			for input_dataset in input_datasets:
 				f.write(input_dataset+'\n')
 
 
 		final_prun_command = prun_command.format(
 			grid_command=grid_command,
+			make_command=make_command,
 			output_name=output_name,
 			merge=' --mergeOutput' if merge else '',
 			)
