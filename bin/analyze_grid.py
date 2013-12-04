@@ -22,6 +22,7 @@ def call_grid(
 	num_processes=1,
 	keep=False,
 	merge=False,
+	jobsize=1,
 	):
 
 	with open(grid_input) as f: grid_data = json.load(f)
@@ -91,7 +92,7 @@ def call_grid(
 		analysis_home=os.path.basename(analysis_home),
 		)
 
-	prun_command = 'prun --bexec="{make_command}" --exec "{grid_command}" --rootVer="5.34.07" --cmtConfig="x86_64-slc5-gcc43-opt" --outputs="skim.root" --inDsTxt=input_datasets.txt --outDS={output_name} --inTarBall=send.tar.gz --useContElementBoundary{merge}'
+	prun_command = 'prun --bexec="{make_command}" --exec "{grid_command}" --rootVer="5.34.07" --cmtConfig="x86_64-slc5-gcc43-opt" --outputs="skim.root" --inDsTxt=input_datasets.txt --outDS={output_name} --inTarBall=send.tar.gz --nGBPerJob={jobsize} --useContElementBoundary{merge}'
 
 	for output_name,input_datasets in grid_data.get('datasets').items():
 
@@ -105,6 +106,7 @@ def call_grid(
 			make_command=make_command,
 			output_name=output_name,
 			merge=' --mergeOutput' if merge else '',
+			jobsize=jobsize,
 			)
 
 		#print final_prun_command
@@ -149,6 +151,7 @@ if __name__ == '__main__':
 		grl=args.GRL,
 		num_processes=args.PROCESSES,
 		keep=args.KEEP,
-		merge=args.MERGE,		
+		merge=args.MERGE,
+		jobsize=args.JOBSIZE,		
 		)
 	
