@@ -183,7 +183,7 @@ def analyze(
 		if finished==num_processes: break		
 
 	print 'Overall rate: {0} Hz'.format(round(entries/(time()-time_start),2))
-	"""
+
 	#Create path to output and output ROOT file, merge results
 	mkpath(os.path.dirname(output))
 	os.close(sys.stdout.fileno())
@@ -198,7 +198,7 @@ def analyze(
 		shutil.move(results[0], output)
 
 	cleanup()
-	"""
+
 def analyze_slice(
 	analysis_constructor,
 	tree,
