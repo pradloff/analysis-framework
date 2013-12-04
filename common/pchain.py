@@ -15,6 +15,7 @@ def generate_dictionaries():
 		]: ROOT.gInterpreter.GenerateDictionary(name,base)
 	os.chdir(cwd)
 
+"""
 def generate_dictionaries():
 	cwd = os.getcwd()
 	try: os.mkdir('dictionaries')
@@ -38,8 +39,7 @@ def generate_dictionaries():
 				]: f.write(line+'\n')
         ROOT.gROOT.ProcessLine('.L {0}+'.format(os.path.abspath('Loader.C')))
 	os.chdir(cwd)
-
-#def generate_dictionaries(): pass
+"""
 
 class pchain():
 
