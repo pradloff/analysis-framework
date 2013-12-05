@@ -78,7 +78,7 @@ def call_grid(
 
 	grl = grid_data.get('GRL')
 
-	grid_command = 'source analysis-framework/setup.sh; source {analysis_home}/setup.sh; analyze.py -m {module} -a {analysis} -i %IN -o skim.root -p {processes} -n {tree}{keep}{grl}'.format(
+	grid_command = 'source analysis-framework/setup.sh; source {analysis_home}/setup.sh; analyze.py -m {module} -a {analysis} -i \`echo %IN | sed \'s/,/ /g\'\` -o skim.root -p {processes} -n {tree}{keep}{grl}'.format(
 		module=module_name,
 		analysis=analysis_name,
 		tree=tree,
