@@ -310,6 +310,8 @@ def analyze_slice(
 		output_name = None
 		cleanup(output,output_name,error)
 
+	del analysis_object.pchain
+
 	print 'Handling results'
 	#Handle results
 	try:

@@ -19,7 +19,7 @@ def call_grid(
 	grid_input,
 	tree='physics',
 	grl= None,
-	num_processes=1,
+	#num_processes=1,
 	keep=False,
 	merge=False,
 	jobsize=1,
@@ -78,11 +78,11 @@ def call_grid(
 
 	grl = grid_data.get('GRL')
 
-	grid_command = 'source analysis-framework/setup.sh; source {analysis_home}/setup.sh; analyze.py -m {module} -a {analysis} -i \`echo %IN | sed \'s/,/ /g\'\` -o skim.root -p {processes} -n {tree}{keep}{grl}'.format(
+	grid_command = 'source analysis-framework/setup.sh; source {analysis_home}/setup.sh; analyze.py -m {module} -a {analysis} -i \`echo %IN | sed \'s/,/ /g\'\` -o skim.root -p 1 -n {tree}{keep}{grl}'.format(
 		module=module_name,
 		analysis=analysis_name,
 		tree=tree,
-		processes=num_processes,
+		#processes=num_processes,
 		analysis_home=os.path.basename(analysis_home),
 		keep=' --keep' if keep else '',
 		grl = ' -g {0}'.format(' '.join(grl)) if grl else '',
@@ -127,7 +127,7 @@ if __name__ == '__main__':
 	parser.add_argument('-a','--analysis',default=None,dest='ANALYSIS',help='Name of analysis to use.')
 	parser.add_argument('-n','--tree',default='physics',dest='TREE',help='TTree name which contains event information.')
 	parser.add_argument('-g','--grl',default=[],dest='GRL',nargs='+',help='Good run list(s) XML file to use.')
-	parser.add_argument('-p','--processes',default=2,dest='PROCESSES',type=int,help='Number of processes to use.')
+	#parser.add_argument('-p','--processes',default=2,dest='PROCESSES',type=int,help='Number of processes to use.')
 	parser.add_argument('--keep',default=False,dest='KEEP',action='store_true',help='Keep all branches, default False')
 	parser.add_argument('--grid',default=None,dest='GRID',help='Similar to [-t --textinput] except containing datasets on grid.  Organize datasets in json file, indexed by output dataset name.')
 	parser.add_argument('--merge',dest='MERGE',action='store_true',help='Merge output of grid jobs.')
@@ -149,7 +149,7 @@ if __name__ == '__main__':
 		args.GRID,
 		tree=args.TREE,
 		grl=args.GRL,
-		num_processes=args.PROCESSES,
+		#num_processes=args.PROCESSES,
 		keep=args.KEEP,
 		merge=args.MERGE,
 		jobsize=args.JOBSIZE,		
