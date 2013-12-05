@@ -73,9 +73,7 @@ class pchain():
 
 	def add_files(self,files):
 		for f in files:
-			if f.startswith('root://') or f.startswith('dcap://'): pass
-			elif not os.path.exists(f): raise OSError,'File {0} does not exist'.format(f)
-			tfile = ROOT.TFile.Open(f)
+			if not f: raise OSError,'File {0} does not exist or could not be opened'.format(f)
 			tree = getattr(tfile,self.tree,None)
 			if any([
 				not tree,
