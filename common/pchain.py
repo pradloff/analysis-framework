@@ -12,6 +12,7 @@ def generate_dictionaries():
 		("vector<vector<float> >","vector"),
 		("vector<vector<int> >","vector"),
 		("vector<vector<unsigned int> >","vector"),
+		("vector<vector<string> >","vector"),
 		("vector<vector<vector<float> > >","vector"),
 		("vector<vector<vector<int> > >","vector"),
 		("vector<vector<vector<unsigned int> > >","vector"),
