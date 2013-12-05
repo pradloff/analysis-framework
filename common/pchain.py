@@ -9,9 +9,12 @@ def generate_dictionaries():
 	if not os.path.exists('dictionaries'): os.mkdir('dictionaries')
 	os.chdir('dictionaries')
 	for name,base in [
-		("std::vector<std::vector<float> >","vector"),
-		("std::vector<std::vector<int> >","vector"),
-		("std::vector<std::vector<unsigned int> >","vector"),
+		("vector<vector<float> >","vector"),
+		("vector<vector<int> >","vector"),
+		("vector<vector<unsigned int> >","vector"),
+		("vector<vector<vector<float> > >","vector"),
+		("vector<vector<vector<int> > >","vector"),
+		("vector<vector<vector<unsigned int> > >","vector"),
 		('vector<TLorentzVector>','vector;TLorentzVector.h'),
 		]: ROOT.gInterpreter.GenerateDictionary(name,base)
 	os.chdir(cwd)
@@ -194,7 +197,7 @@ class pchain():
 			try:
 				self.branch_values[branch_name] = getattr(ROOT,branch_type)()
 			except AttributeError:
-				raise TypeError('Unknown ROOT type {0}'.format(branch_type))
+				raise TypeError('Unknown ROOT type {0} for branch {1}'.format(branch_type,branch_name))
 			self.chain.SetBranchStatus(branch_name,1)
 			self.chain.SetBranchAddress(branch_name,ROOT.AddressOf(self.branch_values[branch_name]))
 		else:
