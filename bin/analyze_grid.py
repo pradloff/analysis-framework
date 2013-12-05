@@ -131,7 +131,7 @@ if __name__ == '__main__':
 	parser.add_argument('--keep',default=False,dest='KEEP',action='store_true',help='Keep all branches, default False')
 	parser.add_argument('--grid',default=None,dest='GRID',help='Similar to [-t --textinput] except containing datasets on grid.  Organize datasets in json file, indexed by output dataset name.')
 	parser.add_argument('--merge',dest='MERGE',action='store_true',help='Merge output of grid jobs.')
-	parser.add_argument('--jobsize',default=1,type=int,dest='JOBSIZE',help='Job size in giga-bytes.')
+	parser.add_argument('--jobsize',default=1,type=int,dest='JOBSIZE',help='Number of files per job.')
 
 	args = parser.parse_args()
 		
