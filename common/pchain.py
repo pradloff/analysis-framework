@@ -77,8 +77,8 @@ class pchain():
 	def add_files(self,files):
 		for f in files:
 			tfile = ROOT.TFile.Open(f)
-			if not tfile: raise OSError,'File {0} does not exist or could not be opened'.format(f)
-			tree = getattr(tfile,self.tree,None)
+			try: tree = getattr(tfile,self.tree,None)
+			except AttributeError: raise OSError,'File {0} does not exist or could not be opened'.format(f)
 			if any([
 				not tree,
 				not isinstance(tree,ROOT.TTree),
