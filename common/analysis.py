@@ -162,7 +162,7 @@ class analyze_slice():
 				#Call result function (does not necessarily respect event.__break__, must be implemented on case by case basis in __call__ of result function)
 				result_function(event)
 
-			rate = (self.entry-self.start)/(time()-time_start)
+			rate = (entry-self.start)/(time()-time_start)
 			done = float(entry-self.start+1)/(self.end-self.start)*100.
 	
 			if done>milestone:
