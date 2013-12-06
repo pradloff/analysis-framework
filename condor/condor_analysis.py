@@ -161,18 +161,18 @@ class analyze_slice():
 		self.error_file.close()
 
 
-if __name__='__main__':
+if __name__=='__main__':
 
 	import sys
 	import argparse
 	
 	parser = argparse.ArgumentParser(prog='analyze_singlet.py',description='Useful caller for analyses with single process.')
-	parser.add_argument('-t','--textinput',default=None,dest='TEXTINPUT',required=True,help='Text file containing input file(s) to analyze.  Separate files by line.')
-	parser.add_argument('-m','--module',default=None,dest='MODULE',required=True,help='Module containing analysis class.')
-	parser.add_argument('-a','--analysis',default=None,dest='ANALYSIS',required=True,help='Name of analysis to use.')
-	parser.add_argument('-o','--output',default='result.root',dest='OUTPUT',required=True,help='Name to give output ROOT file.')
-	parser.add_argument('-l','--logger',default='logger.out',dest='LOGGER',required=True,help='Name to give output logger file.')
-	parser.add_argument('-z','--error',default='error.out',dest='ERROR',required=True,help='Name to give error logger file.')
+	parser.add_argument('-t','--textinput',dest='TEXTINPUT',required=True,help='Text file containing input file(s) to analyze.  Separate files by line.')
+	parser.add_argument('-m','--module',dest='MODULE',required=True,help='Module containing analysis class.')
+	parser.add_argument('-a','--analysis',dest='ANALYSIS',required=True,help='Name of analysis to use.')
+	parser.add_argument('-o','--output',dest='OUTPUT',required=True,help='Name to give output ROOT file.')
+	parser.add_argument('-l','--logger',dest='LOGGER',required=True,help='Name to give output logger file.')
+	parser.add_argument('-z','--error',dest='ERROR',required=True,help='Name to give error logger file.')
 	parser.add_argument('-s',type=int,dest='START',required=True,help='Entry to start processing.')
 	parser.add_argument('-e',type=int,dest='END',required=True,help='Entry to end processing.')
 	parser.add_argument('-n','--tree',dest='TREE',required=True,help='TTree name which contains event information.')
