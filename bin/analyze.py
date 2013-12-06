@@ -104,7 +104,7 @@ def analyze(
 		else: suffix = ''
 		
 		start,end = ranges[process_number]
-		output = 'result{suffix}.root'.format(suffix)
+		output = 'result{0}.root'.format(suffix)
 		error = 'error{0}.out'.format(suffix)
 		logger = 'logger{0}.out'.format(suffix)
 
