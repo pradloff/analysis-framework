@@ -60,9 +60,9 @@ class analyze_slice():
 		#sys.stderr = logpatch_file(logger_file)
 
 		try:
-			analysis_constructor = __import__(module_name,globals(),locals(),[analysis_name]).__dict__[analysis_name]
+			analysis_constructor = __import__(self.module_name,globals(),locals(),[self.analysis_name]).__dict__[self.analysis_name]
 		except ImportError:
-			self.error = 'Problem importing {0} from {1}\n'.format(analysis_name,module_name)+traceback.format_exc()
+			self.error = 'Problem importing {0} from {1}\n'.format(self.analysis_name,self.module_name)+traceback.format_exc()
 			sys.exit(1)
 
 		#Create output
