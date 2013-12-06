@@ -2,24 +2,6 @@
 
 class analyze_slice():
 
-	import os
-	import sys
-	from common.analysis import analysis
-	import traceback
-	import ROOT; ROOT.PyConfig.IgnoreCommandLineOptions = True
-	from common.pchain import generate_dictionaries
-	import shutil
-	from time import sleep, time
-	from distutils.dir_util import mkpath
-	from multiprocessing import Process, Queue
-	from common.event import event_object
-	import string
-	import random
-	from math import log
-	from common.external import call
-	from common.misc import logpatch, logpatch_file
-	from common.standard import in_grl, skim, cutflow, compute_mc_weight
-
 	def __init__(
 		self,
 		module_name,
@@ -34,6 +16,24 @@ class analyze_slice():
 		logger_file_name,
 		keep,
 		):
+
+		import os
+		import sys
+		from common.analysis import analysis
+		import traceback
+		import ROOT; ROOT.PyConfig.IgnoreCommandLineOptions = True
+		from common.pchain import generate_dictionaries
+		import shutil
+		from time import sleep, time
+		from distutils.dir_util import mkpath
+		from multiprocessing import Process, Queue
+		from common.event import event_object
+		import string
+		import random
+		from math import log
+		from common.external import call
+		from common.misc import logpatch, logpatch_file
+		from common.standard import in_grl, skim, cutflow, compute_mc_weight
 
 		self.module_name = module_name
 		self.analysis_name = analysis_name
