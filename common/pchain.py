@@ -68,6 +68,7 @@ class pchain():
 		self.files_branches = {}
 
 		self.current_file_number = -1
+		self.first_entry_files = []
 
 	def __call__(self):
 		return self.chain
@@ -77,16 +78,13 @@ class pchain():
 
 	def add_files(self,files):
 		for f in files:
-			print 'opening file {0}'.format(f)
 			tfile = ROOT.TFile.Open(f)
-			print 'file opened'
 			try: tree = getattr(tfile,self.tree,None)
 			except ReferenceError: raise OSError,'File {0} does not exist or could not be opened'.format(f)
 			if any([
 				not tree,
 				not isinstance(tree,ROOT.TTree),
 				]): raise ValueError,'No matches for TTree "{0}" in file {1}.'.format(self.tree,f)
-			print 'file checks out'
 			self.files.append(f)
 			self.files_branches[f] = [branch.GetName() for branch in tree.GetListOfBranches()]
 			for leaf in tree.GetListOfLeaves():
@@ -140,9 +138,11 @@ class pchain():
 		file_number = self.chain.GetTreeNumber()
 		#reset if file changed
 		if self.current_file_number != file_number:
+			current_file = self.files[self.current_file_number]
+			self.first_entry_files.append(current_file)
 			self.current_file_number = file_number
 			self.branches = {}
-			for branch_name in set(self.branch_names)&set(self.files_branches[self.files[self.current_file_number]]):
+			for branch_name in set(self.branch_names)&set(self.files_branches[current_file]):
 				self.branches[branch_name] = self.chain.GetBranch(branch_name)
 		
 	def get_branches(self,event,branch_names,event_function_name):
