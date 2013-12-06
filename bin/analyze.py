@@ -212,9 +212,9 @@ def analyze_slice(
 	#print statements executed in here and in Event/Result functions are redirected to the main logger
 	#os.close(sys.stdout.fileno())
 	#os.close(sys.stderr.fileno())
-	#sys.stdout = logpatch(logger_queue,'Process number {0}: '.format(process_number),'')
-	#sys.stderr = logpatch(logger_queue,'Process number {0}: '.format(process_number),'')
-	#print 'Patched stdout stderr'
+	sys.stdout = logpatch(logger_queue,'Process number {0}: '.format(process_number),'')
+	sys.stderr = logpatch(logger_queue,'Process number {0}: '.format(process_number),'')
+	print 'Patched stdout stderr'
 
 	generate_dictionaries()
 
@@ -313,7 +313,7 @@ def analyze_slice(
 		output_name = None
 		cleanup(output,output_name,error)
 
-	del analysis_object.pchain
+	del analysis_instance.pchain
 
 	print 'Handling results'
 	#Handle results
