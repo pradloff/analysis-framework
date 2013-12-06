@@ -47,7 +47,6 @@ def analyze(
 			exitcode = self.child.poll()
 			error = ''
 			logger = ''
-			communication = child.communicate()[0]
 
 			if self.error_file: error = self.error_file.read()
 			if self.logger_file: logger = self.logger_file.read()
