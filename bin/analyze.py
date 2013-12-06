@@ -61,6 +61,8 @@ def analyze(
 			try: self.child.kill()
 			except OSError: pass
 
+	output = os.path.abspath(output)
+
 	while True:
 		directory = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
 		try: os.mkdir(directory)
@@ -148,7 +150,7 @@ def analyze(
 				watcher.kill()
 			break
 
-	if any(exitcodes) and len(results)!=num_processes:
+	if any(exitcodes) and not all(finished):
 		print 'Abnormal exit in at least one process, terminating'
 		os.chdir(cwd)
 		if os.path.exists(directory): shutil.rmtree(directory)
