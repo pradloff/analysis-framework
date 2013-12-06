@@ -43,6 +43,7 @@ class analyze_slice():
 		self.keep = keep
 
 		self.error = ''
+		self.output = None
 
 		self.error_file = open(error_file_name,'w+',0)
 		self.logger_file = open(logger_file_name,'w+',0)
@@ -52,8 +53,8 @@ class analyze_slice():
 		sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 		sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
 
-		os.dup2(self.logger_file,sys.stdout.fileno())
-		os.dup2(self.error_file,sys.stderr.fileno())
+		os.dup2(self.logger_file.fileno(),sys.stdout.fileno())
+		os.dup2(self.error_file.fileno(),sys.stderr.fileno())
 
 		#sys.stdout = logpatch_file(logger_file)
 		#sys.stderr = logpatch_file(logger_file)
@@ -153,7 +154,7 @@ class analyze_slice():
 
 
 	def cleanup(self):
-		self.output.Close()
+		if self.output: self.output.Close()
 		if self.error: error_file.write(self.error+'\n')
 		self.logger_file.flush()
 		self.logger_file.close()
