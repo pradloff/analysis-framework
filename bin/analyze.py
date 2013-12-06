@@ -61,7 +61,7 @@ def analyze(
 			try: self.child.kill()
 			except OSError: pass
 
-	output = os.path.abspath(output)
+	full_output = os.path.abspath(output)
 
 	while True:
 		directory = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
@@ -157,16 +157,16 @@ def analyze(
 		sys.exit(1)
 
 	os.chdir(cwd)
-	mkpath(os.path.dirname(output))
+	mkpath(os.path.dirname(full_output))
 	if num_processes>1:
 		merger = ROOT.TFileMerger()
-		if os.path.exists(output): os.remove(output)
-		merger.OutputFile(output)
+		if os.path.exists(full_output): os.remove(full_output)
+		merger.OutputFile(full_output)
 		for result in results:
 			merger.AddFile(directory+'/'+result)
 		merger.Merge()
 	else:
-		shutil.move(results[0], output)	
+		shutil.move(results[0],full_output)	
 	if os.path.exists(directory): shutil.rmtree(directory)
 
 """
