@@ -79,7 +79,7 @@ class pchain():
 		for f in files:
 			tfile = ROOT.TFile.Open(f)
 			try: tree = getattr(tfile,self.tree,None)
-			except AttributeError: raise OSError,'File {0} does not exist or could not be opened'.format(f)
+			except ReferenceError: raise OSError,'File {0} does not exist or could not be opened'.format(f)
 			if any([
 				not tree,
 				not isinstance(tree,ROOT.TTree),
