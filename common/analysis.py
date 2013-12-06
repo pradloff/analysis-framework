@@ -53,7 +53,7 @@ class analysis():
 		self.pchain.request_branches(self.keep_branches)
 
 import os
-import sys
+import sys; sys.argv = []
 import ROOT
 from common.pchain import generate_dictionaries
 from time import time
@@ -88,6 +88,7 @@ class analyze_slice():
 		self.keep = keep
 
 		self.output = None
+		self.exitcode = 1
 
 		self.error_file = open(error_file_name,'w+',0)
 		self.logger_file = open(logger_file_name,'w+',0)
@@ -190,11 +191,11 @@ class analyze_slice():
 
 		self.error_file.flush()
 		self.logger_file.flush()
-
+		self.exitcode = 0
 	def cleanup(self):
 		if self.output: self.output.Close()
 		self.logger_file.flush()
 		self.logger_file.close()
 		self.error_file.flush()
 		self.error_file.close()
-
+		sys.exit(self.exitcode)
