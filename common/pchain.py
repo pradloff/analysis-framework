@@ -77,13 +77,16 @@ class pchain():
 
 	def add_files(self,files):
 		for f in files:
+			print 'opening file {0}'.format(f)
 			tfile = ROOT.TFile.Open(f)
+			print 'file opened'
 			try: tree = getattr(tfile,self.tree,None)
 			except ReferenceError: raise OSError,'File {0} does not exist or could not be opened'.format(f)
 			if any([
 				not tree,
 				not isinstance(tree,ROOT.TTree),
 				]): raise ValueError,'No matches for TTree "{0}" in file {1}.'.format(self.tree,f)
+			print 'file checks out'
 			self.files.append(f)
 			self.files_branches[f] = [branch.GetName() for branch in tree.GetListOfBranches()]
 			for leaf in tree.GetListOfLeaves():
