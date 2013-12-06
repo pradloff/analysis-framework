@@ -179,7 +179,7 @@ class analyze_slice():
 				#Write result function items to output
 				result.Write()
 
-		for meta_result_function in analysis_instance.meta_result_functions:
+		for meta_result_function in self.analysis_instance.meta_result_functions:
 			#Call meta-result function if we touched first entry of that file
 			meta_result_function(self.analysis_instance.pchain.first_entry_files)
 			for result in meta_result_function.results.values():
