@@ -114,7 +114,7 @@ def analyze(
 			tree = tree,
 			start = start,
 			end = end,
-			files_test = files_text,
+			files_text = files_text,
 			output = output,
 			error = error,
 			logger = logger,
