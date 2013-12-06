@@ -52,4 +52,142 @@ class analysis():
 		self.pchain.request_branches(self.required_branches)
 		self.pchain.request_branches(self.keep_branches)
 
+import os
+import sys
+import ROOT
+from common.pchain import generate_dictionaries
+from time import time
+from common.event import event_object
+from common.standard import skim
+
+class analyze_slice():
+
+	def __init__(
+		self,
+		module_name,
+		analysis_name,
+		tree,
+		grl,
+		files,
+		start,
+		end,
+		output_name,
+		error_file_name,
+		logger_file_name,
+		keep,
+		):
+
+		self.module_name = module_name
+		self.analysis_name = analysis_name
+		self.tree = tree
+		self.grl = grl
+		self.files = files
+		self.start = start
+		self.end = end
+		self.output_name = output_name
+		self.keep = keep
+
+		self.error = ''
+		self.output = None
+
+		self.error_file = open(error_file_name,'w+',0)
+		self.logger_file = open(logger_file_name,'w+',0)
+
+	def initialize(self):
+
+		sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+		sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
+
+		os.dup2(self.logger_file.fileno(),sys.stdout.fileno())
+		os.dup2(self.error_file.fileno(),sys.stderr.fileno())
+
+		#sys.stdout = logpatch_file(logger_file)
+		#sys.stderr = logpatch_file(logger_file)
+
+		analysis_constructor = __import__(self.module_name,globals(),locals(),[self.analysis_name]).__dict__[self.analysis_name]
+		#except ImportError:
+		#	self.error = 'Problem importing {0} from {1}\n'.format(self.analysis_name,self.module_name)+traceback.format_exc()
+		#	sys.exit(1)
+
+		#Create output
+		self.output = ROOT.TFile(self.output_name,'RECREATE')
+
+		#Create local copy of analysis
+		self.analysis_instance = analysis_constructor()
+		self.analysis_instance.tree = self.tree
+		self.analysis_instance.grl = self.grl
+		self.analysis_instance.keep_all = self.keep
+
+		with open(self.files) as f: files = [line.strip() for line in f.readlines() if line.strip()]
+		self.analysis_instance.add_file(*files)
+		self.analysis_instance.add_standard_functions()
+		self.analysis_instance.setup_chain()
+		self.analysis_instance.add_result_function(skim(self.analysis_instance))
+
+		#tie results to output file
+		for result_function in self.analysis_instance.result_functions:
+			for result in result_function.results.values():
+				result.SetDirectory(self.output)
+
+		for meta_result_function in self.analysis_instance.meta_result_functions:
+			for result in meta_result_function.results.values():
+				result.SetDirectory(self.output)
+
+	def run(self):
+		generate_dictionaries()
+		milestone = 0.
+		time_start = time()
+		entry=0
+
+		for entry in xrange(self.start,self.end):
+			#Create new event object (basically just a namespace)
+			event = event_object()
+			event.__stop__ = 1
+			event.__entry__ = entry
+			self.analysis_instance.pchain.set_entry(entry)
+			for event_function in self.analysis_instance.event_functions:
+				#Get registered branches from chain
+				self.analysis_instance.pchain.get_branches(event,event_function.required_branches+event_function.create_branches.keys(),event_function.__class__.__name__)
+				#Call event function
+				event_function(event)
+				if event.__break__: break
+				#Increment stop count (used in cutflow)
+				event.__stop__+= 1
+			for result_function in self.analysis_instance.result_functions:
+				#Call result function (does not necessarily respect event.__break__, must be implemented on case by case basis in __call__ of result function)
+				result_function(event)
+
+			rate = (entry-start)/(time()-time_start)
+			done = float(entry-start+1)/(end-start)*100.
+	
+			if done>milestone:
+				milestone+=10.
+				print '{0}% complete, {1} Hz'.format(round(done,2),round(rate,2))
+		#Handle results
+
+		for result_function in self.analysis_instance.result_functions:
+			for result in result_function.results.values():
+				self.output.cd()
+				#Write result function items to output
+				result.Write()
+
+		for meta_result_function in analysis_instance.meta_result_functions:
+			#Call meta-result function if we touched first entry of that file
+			meta_result_function(self.analysis_instance.pchain.first_entry_files)
+			for result in meta_result_function.results.values():
+				self.output.cd()
+				#Write meta-result function items to output
+				result.Write()
+
+		print '{0}% complete, {1} Hz'.format(round(done,2), round(rate,2))	
+		print 'Sending output {0}'.format(output_name)
+
+
+	def cleanup(self):
+		if self.output: self.output.Close()
+		if self.error: error_file.write(self.error+'\n')
+		self.logger_file.flush()
+		self.logger_file.close()
+		self.error_file.flush()
+		self.error_file.close()
 
