@@ -58,7 +58,7 @@ def analyze(
 			return error,logger,exitcode	
 
 		def kill(self):
-			try: child.kill()
+			try: self.child.kill()
 			except OSError: pass
 
 	while True:
@@ -139,6 +139,8 @@ def analyze(
 					if exitcode: print 'Process {0} failed'.format(process_number)
 					exitcodes.append(exitcode)
 					results.append(watcher.result)
+
+			print len(results),num_processes
 			if len(results)==num_processes: break
 		except KeyboardInterrupt:
 			for watcher in watchers:
