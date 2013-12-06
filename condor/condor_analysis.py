@@ -17,24 +17,6 @@ class analyze_slice():
 		keep,
 		):
 
-		import os
-		import sys
-		from common.analysis import analysis
-		import traceback
-		import ROOT; ROOT.PyConfig.IgnoreCommandLineOptions = True
-		from common.pchain import generate_dictionaries
-		import shutil
-		from time import sleep, time
-		from distutils.dir_util import mkpath
-		from multiprocessing import Process, Queue
-		from common.event import event_object
-		import string
-		import random
-		from math import log
-		from common.external import call
-		from common.misc import logpatch, logpatch_file
-		from common.standard import in_grl, skim, cutflow, compute_mc_weight
-
 		self.module_name = module_name
 		self.analysis_name = analysis_name
 		self.tree = tree
@@ -151,6 +133,23 @@ class analyze_slice():
 
 
 if __name__=='__main__':
+
+	import os
+	from common.analysis import analysis
+	import traceback
+	import ROOT; ROOT.PyConfig.IgnoreCommandLineOptions = True
+	from common.pchain import generate_dictionaries
+	import shutil
+	from time import sleep, time
+	from distutils.dir_util import mkpath
+	from multiprocessing import Process, Queue
+	from common.event import event_object
+	import string
+	import random
+	from math import log
+	from common.external import call
+	from common.misc import logpatch, logpatch_file
+	from common.standard import in_grl, skim, cutflow, compute_mc_weight
 
 	import sys
 	import argparse
