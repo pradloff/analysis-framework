@@ -2,7 +2,7 @@ import os
 import sys
 from common.analysis import analysis
 import traceback
-import ROOT
+import ROOT; ROOT.PyConfig.IgnoreCommandLineOptions = True
 from common.pchain import generate_dictionaries
 import shutil
 from time import sleep, time
@@ -59,11 +59,10 @@ class analyze_slice():
 		#sys.stdout = logpatch_file(logger_file)
 		#sys.stderr = logpatch_file(logger_file)
 
-		try:
-			analysis_constructor = __import__(self.module_name,globals(),locals(),[self.analysis_name]).__dict__[self.analysis_name]
-		except ImportError:
-			self.error = 'Problem importing {0} from {1}\n'.format(self.analysis_name,self.module_name)+traceback.format_exc()
-			sys.exit(1)
+		analysis_constructor = __import__(self.module_name,globals(),locals(),[self.analysis_name]).__dict__[self.analysis_name]
+		#except ImportError:
+		#	self.error = 'Problem importing {0} from {1}\n'.format(self.analysis_name,self.module_name)+traceback.format_exc()
+		#	sys.exit(1)
 
 		#Create output
 		self.output = ROOT.TFile(self.output_name,'RECREATE')
