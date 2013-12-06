@@ -109,6 +109,8 @@ class analyze_slice():
 		#	self.error = 'Problem importing {0} from {1}\n'.format(self.analysis_name,self.module_name)+traceback.format_exc()
 		#	sys.exit(1)
 
+		generate_dictionaries()
+
 		#Create output
 		self.output = ROOT.TFile(self.output_name,'RECREATE')
 
@@ -134,7 +136,7 @@ class analyze_slice():
 				result.SetDirectory(self.output)
 
 	def run(self):
-		generate_dictionaries()
+
 		milestone = 0.
 		time_start = time()
 		entry=0
