@@ -127,7 +127,7 @@ def analyze(
 	#Monitor
 	results = []
 	exitcodes = []
-	finished = 0
+	finished = [False for i in range(num_processes)]
 	while True:
 		try:
 			sleep(1)
@@ -135,13 +135,14 @@ def analyze(
 				logger,error,exitcode = watcher.poll()
 				if logger: print logger.strip()
 				if error: print error.strip()
-				if exitcode is not None:
+				if exitcode is not None and not finished[process_number]:
 					if exitcode: print 'Process {0} failed'.format(process_number)
 					else: print 'Process {0} finished successfully'.format(process_number)
 					exitcodes.append(exitcode)
 					results.append(watcher.result)
-					finished+=1
-			if finished==num_processes: break
+					finished[process_number]=True
+			if all(finished): break
+
 		except KeyboardInterrupt:
 			for watcher in watchers:
 				watcher.kill()
