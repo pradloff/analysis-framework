@@ -131,7 +131,7 @@ def analyze(
 		try:
 			sleep(1)
 			for watcher in watchers:
-				logger,error,exitcode = watchers.poll()
+				logger,error,exitcode = watcher.poll()
 				if logger: print logger
 				if error: print error
 				if exitcode is not None:
