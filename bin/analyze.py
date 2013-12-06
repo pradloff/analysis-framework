@@ -30,6 +30,7 @@ def analyze(
 			self.error = error
 			self.logger = logger
 			self.child = child
+			self.prefix = prefix
 
 			self.error_file = None
 			self.logger_file = None
@@ -51,8 +52,8 @@ def analyze(
 			if self.error_file: error = self.error_file.read()
 			if self.logger_file: logger = self.logger_file.read()
 
-			if error: error = prefix+error.replace('\n','\n'+' '*len(prefix))
-			if logger: logger = prefix+logger.replace('\n','\n'+' '*len(prefix))
+			if error: error = self.prefix+error.replace('\n','\n'+' '*len(self.prefix))
+			if logger: logger = self.prefix+logger.replace('\n','\n'+' '*len(self.prefix))
 
 			return error,logger,exitcode	
 
