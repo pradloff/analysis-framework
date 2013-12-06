@@ -11,43 +11,6 @@ import string
 import random
 from math import log
 import subprocess
-from analyze import watcher
-
-class watcher():
-	def __init__(self,output,error,logger,child,prefix):
-		self.result = output	
-		self.error = error
-		self.logger = logger
-		self.child = child
-
-		self.error_file = None
-		self.logger_file = None
-
-	def poll(self):
-		if all([
-			self.error_file is None,
-			os.path.exists(self.error)
-			]): self.error_file = open(self.error,'r+')
-		if all([
-			self.logger_file is None,
-			os.path.exists(self.logger)
-			]): self.logger_file = open(self.logger,'r+')
-
-		exitcode = self.child.poll()
-		error = ''
-		logger = ''
-
-		if self.error_file: error = self.error_file.read()
-		if self.logger_file: logger = self.logger_file.read()
-
-		if error: error = prefix+error.replace('\n','\n'+' '*len(prefix))
-		if logger: logger = prefix+logger.replace('\n','\n'+' '*len(prefix))
-
-		return error,logger,exitcode	
-
-	def kill(self):
-		try: child.kill()
-		except OSError: pass
 
 def analyze(
 	module_name,
@@ -60,6 +23,42 @@ def analyze(
 	entries,
 	keep,
 	):
+
+	class watcher():
+		def __init__(self,output,error,logger,child,prefix):
+			self.result = output	
+			self.error = error
+			self.logger = logger
+			self.child = child
+
+			self.error_file = None
+			self.logger_file = None
+
+		def poll(self):
+			if all([
+				self.error_file is None,
+				os.path.exists(self.error)
+				]): self.error_file = open(self.error,'r+')
+			if all([
+				self.logger_file is None,
+				os.path.exists(self.logger)
+				]): self.logger_file = open(self.logger,'r+')
+
+			exitcode = self.child.poll()
+			error = ''
+			logger = ''
+
+			if self.error_file: error = self.error_file.read()
+			if self.logger_file: logger = self.logger_file.read()
+
+			if error: error = prefix+error.replace('\n','\n'+' '*len(prefix))
+			if logger: logger = prefix+logger.replace('\n','\n'+' '*len(prefix))
+
+			return error,logger,exitcode	
+
+	def kill(self):
+		try: child.kill()
+		except OSError: pass
 
 	print 'Validating analysis'
 
