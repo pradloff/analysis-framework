@@ -57,9 +57,9 @@ def analyze(
 
 			return error,logger,exitcode	
 
-	def kill(self):
-		try: child.kill()
-		except OSError: pass
+		def kill(self):
+			try: child.kill()
+			except OSError: pass
 
 	while True:
 		directory = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
@@ -134,6 +134,7 @@ def analyze(
 				logger,error,exitcode = watcher.poll()
 				if logger: print logger
 				if error: print error
+				print exitcode
 				if exitcode is not None:
 					if exitcode: print 'Process {0} failed'.format(process_number)
 					exitcodes.append(exitcode)
