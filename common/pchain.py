@@ -6,7 +6,8 @@ import os
 
 def generate_dictionaries():
 	cwd = os.getcwd()
-	if not os.path.exists('dictionaries'): os.mkdir('dictionaries')
+	try: os.mkdir('dictionaries')
+	except OSError: pass
 	os.chdir('dictionaries')
 	for name,base in [
 		("vector<vector<float> >","vector"),

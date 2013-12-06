@@ -61,6 +61,16 @@ def analyze(
 		try: child.kill()
 		except OSError: pass
 
+	while True:
+		directory = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
+		try: os.mkdir(directory)
+		except OSError: continue
+		break
+	print 'Created temporary directory {0}'.format(directory)
+
+	cwd = os.getcwd()
+	os.chdir(directory)
+
 	print 'Validating analysis'
 
 	analysis_constructor = __import__(module_name,globals(),locals(),[analysis_name]).__dict__[analysis_name]
@@ -81,16 +91,6 @@ def analyze(
 
 	ranges = [[i*(entries/num_processes),(i+1)*(entries/num_processes)] for i in range(num_processes)]
 	ranges[-1][-1]+= entries%(num_processes)
-
-	while True:
-		directory = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
-		try: os.mkdir(directory)
-		except OSError: continue
-		break
-	print 'Created temporary directory {0}'.format(directory)
-
-	cwd = os.getcwd()
-	os.chdir(directory)
 
 	files_text = 'files.txt'
 	with open(files_text,'w') as f:
@@ -122,8 +122,7 @@ def analyze(
 			keep = ' --keep' if keep else '',
 			grl = ' -g {0}'.format(' '.join(grl)) if grl else '',
 			)
-		process_watcher = watcher(output,error,logger,subprocess.Popen(child_call.split()),'Process {0}: '.format(process_number))
-		watchers.append(process_watcher)
+		watchers.append(watcher(output,error,logger,subprocess.Popen(child_call.split()),'Process {0}: '.format(process_number)))
 
 	#Monitor
 	results = []
@@ -131,12 +130,12 @@ def analyze(
 	while True:
 		try:
 			sleep(1)
-			for watcher in watchers:
+			for process_number,watcher in enumerate(watchers):
 				logger,error,exitcode = watcher.poll()
 				if logger: print logger
 				if error: print error
 				if exitcode is not None:
-					if exitcode: print 'Process {0} failed'.format(watcher.process_num())
+					if exitcode: print 'Process {0} failed'.format(process_number)
 					exitcodes.append(exitcode)
 					results.append(watcher.result)
 			if len(results)==num_processes: break
