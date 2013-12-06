@@ -122,13 +122,7 @@ def analyze(
 			grl = ' -g {0}'.format(' '.join(grl)) if grl else '',
 			)
 
-		watchers.append(watcher(
-			output,
-			error,
-			logger,
-			subprocess.Popen(child_call.split()),
-			'Process {0}: '.format(process_number),
-			))
+		watchers.append(watcher(output,error,logger,subprocess.Popen(child_call.split()),'Process {0}: '.format(process_number)))
 
 	#Monitor
 	results = []
