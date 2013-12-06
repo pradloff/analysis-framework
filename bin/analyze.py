@@ -132,8 +132,8 @@ def analyze(
 			sleep(1)
 			for process_number,watcher in enumerate(watchers):
 				logger,error,exitcode = watcher.poll()
-				if logger: print logger
-				if error: print error
+				if logger: print logger.strip()
+				if error: print error.strip()
 				print exitcode
 				if exitcode is not None:
 					if exitcode: print 'Process {0} failed'.format(process_number)
