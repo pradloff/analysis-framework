@@ -87,7 +87,6 @@ class analyze_slice():
 		self.output_name = output_name
 		self.keep = keep
 
-		self.error = ''
 		self.output = None
 
 		self.error_file = open(error_file_name,'w+',0)
@@ -188,13 +187,12 @@ class analyze_slice():
 				result.Write()
 
 		print '{0}% complete, {1} Hz'.format(round(done,2), round(rate,2))	
-		print 'Sending output {0}'.format(output_name)
+
 		self.error_file.flush()
 		self.logger_file.flush()
 
 	def cleanup(self):
 		if self.output: self.output.Close()
-		if self.error: error_file.write(self.error+'\n')
 		self.logger_file.flush()
 		self.logger_file.close()
 		self.error_file.flush()
