@@ -1,22 +1,25 @@
-import os
-import sys
-from common.analysis import analysis
-import traceback
-import ROOT; ROOT.PyConfig.IgnoreCommandLineOptions = True
-from common.pchain import generate_dictionaries
-import shutil
-from time import sleep, time
-from distutils.dir_util import mkpath
-from multiprocessing import Process, Queue
-from common.event import event_object
-import string
-import random
-from math import log
-from common.external import call
-from common.misc import logpatch, logpatch_file
-from common.standard import in_grl, skim, cutflow, compute_mc_weight
+
 
 class analyze_slice():
+
+	import os
+	import sys
+	from common.analysis import analysis
+	import traceback
+	import ROOT; ROOT.PyConfig.IgnoreCommandLineOptions = True
+	from common.pchain import generate_dictionaries
+	import shutil
+	from time import sleep, time
+	from distutils.dir_util import mkpath
+	from multiprocessing import Process, Queue
+	from common.event import event_object
+	import string
+	import random
+	from math import log
+	from common.external import call
+	from common.misc import logpatch, logpatch_file
+	from common.standard import in_grl, skim, cutflow, compute_mc_weight
+
 	def __init__(
 		self,
 		module_name,
@@ -73,16 +76,11 @@ class analyze_slice():
 		self.analysis_instance.grl = self.grl
 		self.analysis_instance.keep_all = self.keep
 
-		try:
-			with open(self.files) as f: files = [line.strip() for line in f.readlines() if line.strip()]
-			self.analysis_instance.add_file(*files)
-			self.analysis_instance.add_standard_functions()
-			self.analysis_instance.setup_chain()
-			self.analysis_instance.add_result_function(skim(self.analysis_instance))
-
-		except Exception:
-			self.error = 'Error occured in initialization\n'+traceback.format_exc()
-			sys.exit(1)
+		with open(self.files) as f: files = [line.strip() for line in f.readlines() if line.strip()]
+		self.analysis_instance.add_file(*files)
+		self.analysis_instance.add_standard_functions()
+		self.analysis_instance.setup_chain()
+		self.analysis_instance.add_result_function(skim(self.analysis_instance))
 
 		#tie results to output file
 		for result_function in self.analysis_instance.result_functions:
@@ -98,55 +96,46 @@ class analyze_slice():
 		milestone = 0.
 		time_start = time()
 		entry=0
-		try:
-			for entry in xrange(start,end):
-				#Create new event object (basically just a namespace)
-				event = event_object()
-				event.__stop__ = 1
-				event.__entry__ = entry
-				self.analysis_instance.pchain.set_entry(entry)
-				for event_function in self.analysis_instance.event_functions:
-					#Get registered branches from chain
-					self.analysis_instance.pchain.get_branches(event,event_function.required_branches+event_function.create_branches.keys(),event_function.__class__.__name__)
-					#Call event function
-					event_function(event)
-					if event.__break__: break
-					#Increment stop count (used in cutflow)
-					event.__stop__+= 1
-				for result_function in self.analysis_instance.result_functions:
-					#Call result function (does not necessarily respect event.__break__, must be implemented on case by case basis in __call__ of result function)
-					result_function(event)
 
-				rate = (entry-start)/(time()-time_start)
-				done = float(entry-start+1)/(end-start)*100.
-		
-				if done>milestone:
-					milestone+=10.
-					print '{0}% complete, {1} Hz'.format(round(done,2),round(rate,2))
-
-		except Exception:
-			self.error = 'Exception caught in entry {0}\n'.format(entry)+traceback.format_exc()
-			sys.exit(1)
-
-		#Handle results
-		try:
+		for entry in xrange(start,end):
+			#Create new event object (basically just a namespace)
+			event = event_object()
+			event.__stop__ = 1
+			event.__entry__ = entry
+			self.analysis_instance.pchain.set_entry(entry)
+			for event_function in self.analysis_instance.event_functions:
+				#Get registered branches from chain
+				self.analysis_instance.pchain.get_branches(event,event_function.required_branches+event_function.create_branches.keys(),event_function.__class__.__name__)
+				#Call event function
+				event_function(event)
+				if event.__break__: break
+				#Increment stop count (used in cutflow)
+				event.__stop__+= 1
 			for result_function in self.analysis_instance.result_functions:
-				for result in result_function.results.values():
-					self.output.cd()
-					#Write result function items to output
-					result.Write()
+				#Call result function (does not necessarily respect event.__break__, must be implemented on case by case basis in __call__ of result function)
+				result_function(event)
 
-			for meta_result_function in analysis_instance.meta_result_functions:
-				#Call meta-result function if we touched first entry of that file
-				meta_result_function(self.analysis_instance.pchain.first_entry_files)
-				for result in meta_result_function.results.values():
-					self.output.cd()
-					#Write meta-result function items to output
-					result.Write()
+			rate = (entry-start)/(time()-time_start)
+			done = float(entry-start+1)/(end-start)*100.
+	
+			if done>milestone:
+				milestone+=10.
+				print '{0}% complete, {1} Hz'.format(round(done,2),round(rate,2))
+		#Handle results
 
-		except Exception:
-			self.error = 'Exception caught while handling results\n'+traceback.format_exc()
-			sys.exit()
+		for result_function in self.analysis_instance.result_functions:
+			for result in result_function.results.values():
+				self.output.cd()
+				#Write result function items to output
+				result.Write()
+
+		for meta_result_function in analysis_instance.meta_result_functions:
+			#Call meta-result function if we touched first entry of that file
+			meta_result_function(self.analysis_instance.pchain.first_entry_files)
+			for result in meta_result_function.results.values():
+				self.output.cd()
+				#Write meta-result function items to output
+				result.Write()
 
 		print '{0}% complete, {1} Hz'.format(round(done,2), round(rate,2))	
 		print 'Sending output {0}'.format(output_name)
