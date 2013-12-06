@@ -115,7 +115,7 @@ def analyze(
 			start = start,
 			end = end,
 			files_test = files_text,
-			output = output
+			output = output,
 			error = error,
 			logger = logger,
 			keep = ' --keep' if keep else '',
