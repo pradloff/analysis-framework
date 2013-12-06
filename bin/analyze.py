@@ -11,7 +11,7 @@ import string
 import random
 from math import log
 import subprocess
-from . import watcher
+from analyze import watcher
 
 class watcher():
 	def __init__(self,output,error,logger,child,prefix):
