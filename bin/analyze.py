@@ -134,13 +134,14 @@ def analyze(
 				logger,error,exitcode = watcher.poll()
 				if logger: print logger.strip()
 				if error: print error.strip()
-				print exitcode
+				#print exitcode
 				if exitcode is not None:
 					if exitcode: print 'Process {0} failed'.format(process_number)
+					else: print 'Process {0} finished successfully'.format(process_number)
 					exitcodes.append(exitcode)
 					results.append(watcher.result)
 
-			print len(results),num_processes
+			#print len(results),num_processes
 			if len(results)==num_processes: break
 		except KeyboardInterrupt:
 			for watcher in watchers:
