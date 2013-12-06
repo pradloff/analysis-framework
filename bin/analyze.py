@@ -493,7 +493,7 @@ if __name__ == '__main__':
 	analyze(
 		args.MODULE,
 		args.ANALYSIS,
-		files=files,
+		files,
 		args.TREE,
 		args.GRL,
 		args.PROCESSES,
