@@ -190,7 +190,7 @@ if __name__=='__main__':
 		args.START,
 		args.END,
 		args.OUTPUT,
-		args.ERROR
+		args.ERROR,
 		args.LOGGER,
 		args.KEEP,
 		)
