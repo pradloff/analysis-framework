@@ -81,20 +81,14 @@ def analyze(
 	analysis_instance = analysis_constructor()
 	analysis_instance.tree = tree
 	analysis_instance.grl = grl
-	analysis_instance.add_file(*files)
-	analysis_instance.setup_chain()
+	#analysis_instance.add_file(*files)
+	#analysis_instance.setup_chain()
 
 	print '\n'+'-'*50
 
-	if entries is not None:
-		entries = min([int(entries),analysis_instance.pchain.get_entries()])
-	else: entries = analysis_instance.pchain.get_entries()
-
-	if not entries: return 1
-
 	del analysis_instance
 
-	print 'Processing {0} entries with {1} processes'.format(entries,num_processes)
+	#print 'Processing {0} entries with {1} processes'.format(entries,num_processes)
 	
 	#Result, error and log queue
 	result_queue = Queue()
@@ -110,15 +104,16 @@ def analyze(
 	print 'Created temporary directory {0}'.format(directory)
 
 	#Instantiate and start processes
-	ranges = [[i*(entries/num_processes),(i+1)*(entries/num_processes)] for i in range(num_processes)]; ranges[-1][-1]+=entries%(num_processes)
+
 
 	processes = [Process(target = analyze_slice, args = (
 			analysis_constructor,
 			tree,
 			grl,
 			files,
-			ranges,
+			entries,
 			process_number,
+			num_processes,
 			directory,
 			result_queue,
 			error_queue,
@@ -182,7 +177,7 @@ def analyze(
 
 		if finished==num_processes: break		
 
-	print 'Overall rate: {0} Hz'.format(round(entries/(time()-time_start),2))
+	#print 'Overall rate: {0} Hz'.format(round(entries/(time()-time_start),2))
 
 	#Create path to output and output ROOT file, merge results
 	mkpath(os.path.dirname(output))
@@ -204,8 +199,9 @@ def analyze_slice(
 	tree,
 	grl,
 	files,
-	ranges,
+	entries,
 	process_number,
+	num_processes,
 	directory,
 	result_queue,
 	error_queue,
@@ -235,7 +231,6 @@ def analyze_slice(
 
 	#Create output
 	print 'Creating output'
-	num_processes = len(ranges)
 	if num_processes>1: output_name = '{directory}/temp_{0:0>{1}}.root'.format(process_number,int(log(num_processes-1,10))+1,directory=directory)
 	else: output_name = '{directory}/temp.root'.format(directory=directory)
 	output = ROOT.TFile(output_name,'RECREATE')
@@ -262,6 +257,12 @@ def analyze_slice(
 		output_name = None
 		cleanup(output,output_name,error)
 
+	if entries is not None:
+		entries = min([int(entries),analysis_instance.pchain.get_entries()])
+	else: entries = analysis_instance.pchain.get_entries()
+
+	ranges = [[i*(entries/num_processes),(i+1)*(entries/num_processes)] for i in range(num_processes)]; ranges[-1][-1]+=entries%(num_processes)
+
 	#tie results to output file
 	print 'Initializing results'
 	for result_function in analysis_instance.result_functions:
@@ -276,6 +277,8 @@ def analyze_slice(
 
 	start,end = ranges[process_number]
 	time_start = time()
+
+	print 'Processing from {0} to {1}'.format(start,end)
 
 	print 'Starting looping'
 	entry=0
