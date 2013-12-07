@@ -174,7 +174,7 @@ def analyze(
 			shutil.rmtree(directory)
 			break
 		except OSError as error:
-			if error.errorno != 39: raise
+			if error.errno != 39: raise
 """
 def analyze(
 	analysis_constructor,
