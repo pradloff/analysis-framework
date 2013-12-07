@@ -169,16 +169,12 @@ def analyze(
 	else:
 		shutil.move(results[0],full_output)
 
-
-	def rm_on_error(*args):
-		func, path, _ = args 
-		os.chmod(path, stat.S_IWRITE)
-		try: os.remove(path)
+	while os.path.exists(directory): 
+		try: 
+			shutil.rmtree(directory)
+			break
 		except OSError as error:
-			if error.errno==21: shutil.rmtree(directory,onerror=rm_on_error)
-			else: raise
-	if os.path.exists(directory): shutil.rmtree(directory,onerror=rm_on_error)
-
+			if errorno != 39: raise
 """
 def analyze(
 	analysis_constructor,
