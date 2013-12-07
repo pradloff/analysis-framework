@@ -12,6 +12,7 @@ import random
 from math import log
 import subprocess
 import stat
+import atexit
 
 def analyze(
 	module_name,
@@ -74,6 +75,8 @@ def analyze(
 	print 'Created temporary directory {0}'.format(directory)
 
 	cwd = os.getcwd()
+	atexit.register(shutil.rmtree,os.path.abspath(directory))
+
 	os.chdir(directory)
 
 	print 'Validating analysis'
@@ -175,8 +178,8 @@ def analyze(
 	else:
 		shutil.move(results[0],full_output)
 
-	import code; code.interact(local=locals())
-	if os.path.exists(directory): shutil.rmtree(directory)
+	#import code; code.interact(local=locals())
+	#if os.path.exists(directory): shutil.rmtree(directory)
 
 	"""
 	def onerror(*args):
