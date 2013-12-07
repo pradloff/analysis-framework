@@ -173,12 +173,12 @@ def analyze(
 		func, path, _ = args
 		print func,path
 		if os.path.basename(path).startswith('.nfs'): return
-		if os.path.isdir(shutil.rmtree(path,onerror=onerror)
+		if os.path.isdir(path): shutil.rmtree(path,onerror=onerror)
 		else: os.remove(path)
 
 	while os.path.exists(directory): 
 		try:
-			shutil.rmtree(directory,onerror)
+			shutil.rmtree(directory,onerror=onerror)
 			break
 		except OSError as error:
 			if error.errno not in [16,39]: raise
