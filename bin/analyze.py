@@ -223,7 +223,7 @@ if __name__ == '__main__':
 		sys.exit(1)
 
 	while True:
-		directory = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
+		directory = '/tmp/'+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
 		try: os.mkdir(directory)
 		except OSError: continue
 		break
