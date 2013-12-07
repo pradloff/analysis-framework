@@ -67,6 +67,18 @@ def analyze(
 
 	full_output = os.path.abspath(output)
 
+	while True:
+		directory = '/tmp/'+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
+		try: os.mkdir(directory)
+		except OSError: continue
+		break
+	print 'Created temporary directory {0}'.format(directory)
+
+	cwd = os.getcwd()
+	atexit.register(os.chdir,cwd)
+	atexit.register(shutil.rmtree,os.path.abspath(directory))
+	os.chdir(directory)
+
 	print 'Validating analysis'
 
 	analysis_constructor = __import__(module_name,globals(),locals(),[analysis_name]).__dict__[analysis_name]
@@ -166,27 +178,6 @@ def analyze(
 	else:
 		shutil.move(results[0],full_output)
 
-
-	#import code; code.interact(local=locals())
-	#if os.path.exists(directory): shutil.rmtree(directory)
-
-	"""
-	def onerror(*args):
-		func, path, _ = args
-		print func,path
-		if os.path.basename(path).startswith('.nfs'): return
-		if os.path.isdir(path): shutil.rmtree(path,onerror=onerror)
-		else: os.remove(path)
-
-	while os.path.exists(directory): 
-		try:
-			shutil.rmtree(directory,onerror=onerror)
-			break
-		except OSError as error:
-			if error.errno not in [16,39]: raise
-			sleep(.5)
-	"""
-
 if __name__ == '__main__':
 
 	import sys
@@ -221,19 +212,6 @@ if __name__ == '__main__':
 	if not files:
 		print 'Must include some form of input [-i, --input], [-t, --textinput]'
 		sys.exit(1)
-
-	while True:
-		directory = '/tmp/'+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
-		try: os.mkdir(directory)
-		except OSError: continue
-		break
-	print 'Created temporary directory {0}'.format(directory)
-
-	cwd = os.getcwd()
-	atexit.register(os.chdir,cwd)
-	atexit.register(sleep,1)
-	atexit.register(shutil.rmtree,os.path.abspath(directory))
-	os.chdir(directory)	
 
 	analyze(
 		args.MODULE,
