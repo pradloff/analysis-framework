@@ -3,7 +3,7 @@
 def call_grid(
 	module_name,
 	analysis_name,
-	grid_input,
+	grid_jsons,
 	tree='physics',
 	grl= None,
 	num_processes=1,
@@ -22,7 +22,10 @@ def call_grid(
 	import tarfile
 	import json
 
-	with open(grid_input) as f: grid_data = json.load(f)
+	#parse all first because we change directory and finds json problems
+	grid_datas = []
+	for grid_json in grid_jsons:
+		with open(grid_json) as f: grid_datas.append(json.load(f))
 
 	while True:
 		directory = '/tmp/'+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
@@ -57,41 +60,43 @@ def call_grid(
 
 	os.chdir(directory)
 
-	grl = grid_data.get('GRL')
+	for grid_data in grid_datas:
 
-	grid_command = 'source analysis-framework/setup.sh; source {analysis_home}/setup.sh; analyze.py -m {module} -a {analysis} -i \`echo %IN | sed \'s/,/ /g\'\` -o skim.root -p {processes} -n {tree}{keep}{grl}'.format(
-		module=module_name,
-		analysis=analysis_name,
-		tree=tree,
-		processes=num_processes,
-		analysis_home=os.path.basename(analysis_home),
-		keep=' --keep' if keep else '',
-		grl = ' -g {0}'.format(' '.join(grl)) if grl else '',
-		)
+		grl = grid_data.get('GRL')
+
+		grid_command = 'source analysis-framework/setup.sh; source {analysis_home}/setup.sh; analyze.py -m {module} -a {analysis} -i \`echo %IN | sed \'s/,/ /g\'\` -o skim.root -p {processes} -n {tree}{keep}{grl}'.format(
+			module=module_name,
+			analysis=analysis_name,
+			tree=tree,
+			processes=num_processes,
+			analysis_home=os.path.basename(analysis_home),
+			keep=' --keep' if keep else '',
+			grl = ' -g {0}'.format(' '.join(grl)) if grl else '',
+			)
 	
-	make_command = 'source analysis-framework/setup.sh; source {analysis_home}/setup.sh; python {analysis_home}/make_externals.py'.format(
-		analysis_home=os.path.basename(analysis_home),
-		)
-
-	prun_command = 'prun --bexec="{make_command}" --exec "{grid_command}" --rootVer="5.34.07" --cmtConfig="x86_64-slc5-gcc43-opt" --outputs="skim.root" --inDsTxt=input_datasets.txt --outDS={output_name} --inTarBall=send.tar.gz --nFilesPerJob={jobsize} --nGBPerJob=MAX --useContElementBoundary{merge}'
-
-	for output_name,input_datasets in grid_data.get('datasets').items():
-
-		with open('input_datasets.txt','w') as f:
-			for input_dataset in input_datasets:
-				f.write(input_dataset+'\n')
-
-
-		final_prun_command = prun_command.format(
-			grid_command=grid_command,
-			make_command=make_command,
-			output_name=output_name,
-			merge=' --mergeOutput' if merge else '',
-			jobsize=jobsize,
+		make_command = 'source analysis-framework/setup.sh; source {analysis_home}/setup.sh; python {analysis_home}/make_externals.py'.format(
+			analysis_home=os.path.basename(analysis_home),
 			)
 
-		#print final_prun_command
-		print call(final_prun_command,verbose=True).strip()
+		prun_command = 'prun --bexec="{make_command}" --exec "{grid_command}" --rootVer="5.34.07" --cmtConfig="x86_64-slc5-gcc43-opt" --outputs="skim.root" --inDsTxt=input_datasets.txt --outDS={output_name} --inTarBall=send.tar.gz --nFilesPerJob={jobsize} --nGBPerJob=MAX --useContElementBoundary{merge}'
+
+		for output_name,input_datasets in grid_data.get('datasets').items():
+
+			with open('input_datasets.txt','w') as f:
+				for input_dataset in input_datasets:
+					f.write(input_dataset+'\n')
+
+
+			final_prun_command = prun_command.format(
+				grid_command=grid_command,
+				make_command=make_command,
+				output_name=output_name,
+				merge=' --mergeOutput' if merge else '',
+				jobsize=jobsize,
+				)
+
+			#print final_prun_command
+			print call(final_prun_command,verbose=True).strip()
 
 if __name__ == '__main__':
 
@@ -104,7 +109,7 @@ if __name__ == '__main__':
 	parser.add_argument('-g','--grl',default=[],dest='GRL',nargs='+',help='Good run list(s) XML file to use.')
 	parser.add_argument('-p','--processes',default=1,dest='PROCESSES',type=int,help='Number of processes to use.')
 	parser.add_argument('--keep',default=False,dest='KEEP',action='store_true',help='Keep all branches, default False')
-	parser.add_argument('--grid',dest='GRID',required=True,help='Similar to [-t --textinput] except containing datasets on grid.  Organize datasets in json file, indexed by output dataset name.')
+	parser.add_argument('--grid',dest='GRID',required=True,nargs='+',help='Similar to [-t --textinput] except containing datasets on grid.  Organize datasets in json file, indexed by output dataset name.')
 	parser.add_argument('--merge',dest='MERGE',action='store_true',help='Merge output of grid jobs.')
 	parser.add_argument('--jobsize',default=1,type=int,dest='JOBSIZE',help='Number of files per job.')
 
