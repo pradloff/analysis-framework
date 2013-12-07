@@ -101,13 +101,7 @@ class analyze_slice():
 		os.dup2(self.logger_file.fileno(),sys.stdout.fileno())
 		os.dup2(self.error_file.fileno(),sys.stderr.fileno())
 
-		#sys.stdout = logpatch_file(logger_file)
-		#sys.stderr = logpatch_file(logger_file)
-
 		analysis_constructor = __import__(self.module_name,globals(),locals(),[self.analysis_name]).__dict__[self.analysis_name]
-		#except ImportError:
-		#	self.error = 'Problem importing {0} from {1}\n'.format(self.analysis_name,self.module_name)+traceback.format_exc()
-		#	sys.exit(1)
 
 		generate_dictionaries()
 

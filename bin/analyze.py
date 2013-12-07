@@ -94,6 +94,8 @@ def analyze(
 		entries = min([int(entries),analysis_instance.pchain.get_entries()])
 	else: entries = analysis_instance.pchain.get_entries()
 
+	del analysis_instance
+
 	ranges = [[i*(entries/num_processes),(i+1)*(entries/num_processes)] for i in range(num_processes)]
 	ranges[-1][-1]+= entries%(num_processes)
 
@@ -174,7 +176,7 @@ def analyze(
 		shutil.move(results[0],full_output)
 
 	import code; code.interact(local=locals())
-	if os.path.exists(directory): shut.rmtree(directory)
+	if os.path.exists(directory): shutil.rmtree(directory)
 
 	"""
 	def onerror(*args):
