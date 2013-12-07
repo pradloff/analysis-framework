@@ -1,18 +1,5 @@
 #!/usr/bin/env python
 
-import os
-import sys
-from common.analysis import analysis
-import traceback
-import shutil
-from time import sleep, time
-from distutils.dir_util import mkpath
-import string
-import random
-from common.external import call
-import tarfile
-import json
-
 def call_grid(
 	module_name,
 	analysis_name,
@@ -25,32 +12,16 @@ def call_grid(
 	jobsize=1,
 	):
 
+	import os
+	import shutil
+	from time import sleep, time
+	import string
+	import random
+	from common.external import call
+	import tarfile
+	import json
+
 	with open(grid_input) as f: grid_data = json.load(f)
-
-	cwd = os.getcwd()
-
-	analysis_home = os.getenv('ANALYSISHOME')
-	analysis_framework = os.getenv('ANALYSISFRAMEWORK')
-
-	os.chdir(analysis_home)
-
-	if not os.path.exists(module_name):
-		print '$ANALYSISHOME/analyses/{0} not found'.format(module_name)
-		return 0
-	module = '.'.join([part for part in module_name.split('/')]).rstrip('.py')
-	try:
-		analysis_constructor = __import__(module,globals(),locals(),[analysis_name]).__dict__[analysis_name]
-	except ImportError:
-		error = 'Problem importing {0} from $ANALYSISHOME/analyses/{1}\n'.format(analysis_name,module_name)+traceback.format_exc()
-		print error
-		return 0	
-	if not issubclass(analysis_constructor,analysis):
-		print '{0} in $ANALYSISHOME/analyses/{1} is not an analysis type'.format(analysis_constructor,module_name)
-		return 0
-
-	analysis_instance = analysis_constructor()
-
-	os.chdir(cwd)
 
 	while True:
 		directory = '/tmp/'+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
@@ -61,7 +32,17 @@ def call_grid(
 		break
 	print 'Created temporary directory {0}'.format(directory)
 
+	cwd = os.getcwd()
+	atexit.register(os.chdir,cwd)
+	atexit.register(shutil.rmtree,os.path.abspath(directory))
 	os.chdir(directory)
+
+	analysis_home = os.getenv('ANALYSISHOME')
+	analysis_framework = os.getenv('ANALYSISFRAMEWORK')
+
+	analysis_constructor = __import__(module_name,globals(),locals(),[analysis_name]).__dict__[analysis_name]
+
+	analysis_instance = analysis_constructor()
 
 	#create tarball of working directory
 	print 'Creating tarball'
@@ -110,8 +91,6 @@ def call_grid(
 
 		#print final_prun_command
 		print call(final_prun_command,verbose=True).strip()
-	os.chdir(cwd)
-	shutil.rmtree(directory)
 
 if __name__ == '__main__':
 
