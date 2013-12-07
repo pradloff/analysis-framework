@@ -67,18 +67,6 @@ def analyze(
 
 	full_output = os.path.abspath(output)
 
-	while True:
-		directory = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
-		try: os.mkdir(directory)
-		except OSError: continue
-		break
-	print 'Created temporary directory {0}'.format(directory)
-
-	cwd = os.getcwd()
-	atexit.register(shutil.rmtree,os.path.abspath(directory))
-
-	os.chdir(directory)
-
 	print 'Validating analysis'
 
 	analysis_constructor = __import__(module_name,globals(),locals(),[analysis_name]).__dict__[analysis_name]
@@ -179,7 +167,7 @@ def analyze(
 		shutil.move(results[0],full_output)
 
 
-	import code; code.interact(local=locals())
+	#import code; code.interact(local=locals())
 	#if os.path.exists(directory): shutil.rmtree(directory)
 
 	"""
@@ -234,6 +222,18 @@ if __name__ == '__main__':
 		print 'Must include some form of input [-i, --input], [-t, --textinput]'
 		sys.exit(1)
 
+	while True:
+		directory = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
+		try: os.mkdir(directory)
+		except OSError: continue
+		break
+	print 'Created temporary directory {0}'.format(directory)
+
+	cwd = os.getcwd()
+	atexit.register(os.chdir,cwd)
+	atexit.register(sleep,1)
+	atexit.register(shutil.rmtree,os.path.abspath(directory))
+	os.chdir(directory)	
 
 	analyze(
 		args.MODULE,
@@ -247,4 +247,3 @@ if __name__ == '__main__':
 		args.KEEP,
 		)
 
-	
