@@ -205,7 +205,7 @@ if __name__ == '__main__':
 	
 	if args.INPUT:
 		if isinstance(args.INPUT,str): files.append(args.INPUT if ':' in args.input else os.path.abspath(args.INPUT))
-		elif isinstance(args.INPUT,list): files += [file_ if ':' in file_ else os.path.abspath(args.INPUT) for file_ in args.INPUT]
+		elif isinstance(args.INPUT,list): files += [file_ if ':' in file_ else os.path.abspath(file_) for file_ in args.INPUT]
 	
 	if args.TEXTINPUT:
 		with open(args.TEXTINPUT) as f:
