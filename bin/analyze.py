@@ -168,10 +168,17 @@ def analyze(
 		merger.Merge()
 	else:
 		shutil.move(results[0],full_output)
+	
+	def onerror(*args):
+		func, path, _ = args
+		print func,path
+		os.path.basename(path).startswith('.nfs'): return
+		if os.path.isdir(shutil.rmtree(path,onerror=onerror)
+		else: os.remove(path)
 
 	while os.path.exists(directory): 
-		try: 
-			shutil.rmtree(directory)
+		try:
+			shutil.rmtree(directory,onerror)
 			break
 		except OSError as error:
 			if error.errno not in [16,39]: raise
