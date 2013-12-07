@@ -113,35 +113,23 @@ def call_grid(
 	os.chdir(cwd)
 	shutil.rmtree(directory)
 
-#=======================================================================================================
-	
 if __name__ == '__main__':
 
-	import sys
 	import argparse
-	import code
 
-	parser = argparse.ArgumentParser(prog='analyze_condor.py',description='Useful grid caller for analyses.')
-	parser.add_argument('-m','--module',default=None,dest='MODULE',help='Module containing analysis class.')
-	parser.add_argument('-a','--analysis',default=None,dest='ANALYSIS',help='Name of analysis to use.')
-	parser.add_argument('-n','--tree',default='physics',dest='TREE',help='TTree name which contains event information.')
+	parser = argparse.ArgumentParser(prog='analyze_grid.py',description='Useful grid caller for analyses.')
+	parser.add_argument('-m','--module',default=None,dest='MODULE',required=True,help='Module containing analysis class.')
+	parser.add_argument('-a','--analysis',default=None,dest='ANALYSIS',required=True,help='Name of analysis to use.')
+	parser.add_argument('-n','--tree',default='physics',dest='TREE',required=True,help='TTree name which contains event information.')
 	parser.add_argument('-g','--grl',default=[],dest='GRL',nargs='+',help='Good run list(s) XML file to use.')
 	parser.add_argument('-p','--processes',default=1,dest='PROCESSES',type=int,help='Number of processes to use.')
 	parser.add_argument('--keep',default=False,dest='KEEP',action='store_true',help='Keep all branches, default False')
-	parser.add_argument('--grid',default=None,dest='GRID',help='Similar to [-t --textinput] except containing datasets on grid.  Organize datasets in json file, indexed by output dataset name.')
+	parser.add_argument('--grid',dest='GRID',required=True,help='Similar to [-t --textinput] except containing datasets on grid.  Organize datasets in json file, indexed by output dataset name.')
 	parser.add_argument('--merge',dest='MERGE',action='store_true',help='Merge output of grid jobs.')
 	parser.add_argument('--jobsize',default=1,type=int,dest='JOBSIZE',help='Number of files per job.')
 
 	args = parser.parse_args()
 		
-	allargs = True
-	
-	if not any([args.GRID]): print 'Must include some form of input [-i, --input], [-t, --textinput], [-d, --dataset], or [-r, --grid]'; allargs = False
-	if not args.MODULE: print 'Must include name of module containing analysis [-m, --module]'; allargs = False
-	if not args.ANALYSIS: print 'Must include name of analysis [-a, --analysis]'; allargs = False
-
-	if not allargs: sys.exit()
-
 	call_grid(
 		args.MODULE,
 		args.ANALYSIS,
