@@ -67,10 +67,13 @@ def analyze(
 
 	full_output = os.path.abspath(output)
 
+
 	while True:
 		directory = '/tmp/'+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
 		try: os.mkdir(directory)
-		except OSError: continue
+		except OSError as error:
+			if error.errno != 17: raise
+			continue
 		break
 	print 'Created temporary directory {0}'.format(directory)
 
@@ -192,7 +195,7 @@ if __name__ == '__main__':
 	parser.add_argument('--entries',default=None,dest='ENTRIES',help='Number of entries to process.')	
 	parser.add_argument('-n','--tree',dest='TREE',required=True,help='TTree name which contains event information.')
 	parser.add_argument('-g','--grl',default=[],dest='GRL',nargs='+',help='Good run list(s) XML file to use.')
-	parser.add_argument('-p','--processes',default=2,dest='PROCESSES',type=int,help='Number of processes to use.')
+	parser.add_argument('-p','--processes',default=1,dest='PROCESSES',type=int,help='Number of processes to use.')
 	parser.add_argument('--keep',default=False,dest='KEEP',action='store_true',help='Keep all branches, default False')
 
 	args = parser.parse_args()
