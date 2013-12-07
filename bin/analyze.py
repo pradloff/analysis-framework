@@ -172,7 +172,7 @@ def analyze(
 	def onerror(*args):
 		func, path, _ = args
 		print func,path
-		os.path.basename(path).startswith('.nfs'): return
+		if os.path.basename(path).startswith('.nfs'): return
 		if os.path.isdir(shutil.rmtree(path,onerror=onerror)
 		else: os.remove(path)
 
