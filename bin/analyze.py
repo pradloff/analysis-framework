@@ -185,7 +185,8 @@ if __name__ == '__main__':
 
 	import sys
 	import argparse
-	
+	import os
+
 	parser = argparse.ArgumentParser(prog='analyze.py',description='Useful caller for analyses.')
 	parser.add_argument('-i','--input',default=[],dest='INPUT', nargs='+',help='Input file(s) to analyze.')
 	parser.add_argument('-t','--textinput',default=None,dest='TEXTINPUT',help='Text file containing input file(s) to analyze.  Separate files by line.')
@@ -203,17 +204,18 @@ if __name__ == '__main__':
 	files = []
 	
 	if args.INPUT:
-		if isinstance(args.INPUT,str): files.append(args.INPUT)
-		elif isinstance(args.INPUT,list): files += args.INPUT
+		if isinstance(args.INPUT,str): files.append(args.INPUT if ':' in args.input else os.path.abspath(args.INPUT))
+		elif isinstance(args.INPUT,list): files += [file_ if ':' in file_ else os.path.abspath(args.INPUT) for file_ in args.INPUT]
 	
 	if args.TEXTINPUT:
 		with open(args.TEXTINPUT) as f:
 			for line in f.readlines():
 				if not line.strip(): continue
-				files.append(line.strip())
+				file_ = line.strip()
+				files.append(file_ if ':' in file_ else os.path.abspath(file_))
 
 	if not files:
-		print 'Must include some form of input [-i, --input], [-t, --textinput]'
+		print 'No input found, exiting'
 		sys.exit(1)
 
 	analyze(
