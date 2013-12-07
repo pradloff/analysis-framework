@@ -11,6 +11,7 @@ import string
 import random
 from math import log
 import subprocess
+import stat
 
 def analyze(
 	module_name,
@@ -166,8 +167,15 @@ def analyze(
 			merger.AddFile(directory+'/'+result)
 		merger.Merge()
 	else:
-		shutil.move(results[0],full_output)	
-	if os.path.exists(directory): shutil.rmtree(directory)
+		shutil.move(results[0],full_output)
+
+
+	def rm_on_error(*args):
+	    func, path, _ = args 
+	    os.chmod(path, stat.S_IWRITE)
+	    os.remove(path)
+
+	if os.path.exists(directory): shutil.rmtree(directory,onerror=rm_on_error)
 
 """
 def analyze(
