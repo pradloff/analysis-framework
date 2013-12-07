@@ -178,7 +178,8 @@ def analyze(
 	else:
 		shutil.move(results[0],full_output)
 
-	#import code; code.interact(local=locals())
+
+	import code; code.interact(local=locals())
 	#if os.path.exists(directory): shutil.rmtree(directory)
 
 	"""
