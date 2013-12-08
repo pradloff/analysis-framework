@@ -161,7 +161,7 @@ def analyze(
 				watcher.kill()
 			break
 
-	if any(exitcodes) and not all(finished):
+	if any(exitcodes) or not all(finished):
 		print 'Abnormal exit in at least one process, terminating'
 		os.chdir(cwd)
 		if os.path.exists(directory): shutil.rmtree(directory)
