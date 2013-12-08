@@ -66,7 +66,7 @@ def call_grid(
 
 		grl = grid_data.get('GRL')
 
-		grid_command = 'source analysis-framework/setup.sh; source {analysis_home}/setup.sh; analyze.py -m {module} -a {analysis} -i \`echo %IN | sed \'s/,/ /g\'\` -o skim.root -p {processes} -n {tree}{keep}{grl}'.format(
+		grid_command = 'unset tmp; unset tmpdir; source analysis-framework/setup.sh; source {analysis_home}/setup.sh; analyze.py -m {module} -a {analysis} -i \`echo %IN | sed \'s/,/ /g\'\` -o skim.root -p {processes} -n {tree}{keep}{grl}'.format(
 			module=module_name,
 			analysis=analysis_name,
 			tree=tree,
@@ -76,7 +76,7 @@ def call_grid(
 			grl = ' -g {0}'.format(' '.join(grl)) if grl else '',
 			)
 	
-		make_command = 'source analysis-framework/setup.sh; source {analysis_home}/setup.sh; python {analysis_home}/make_externals.py'.format(
+		make_command = 'unset tmp; unset tmpdir; source analysis-framework/setup.sh; source {analysis_home}/setup.sh; python {analysis_home}/make_externals.py'.format(
 			analysis_home=os.path.basename(analysis_home),
 			)
 
