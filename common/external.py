@@ -78,7 +78,8 @@ def load(package,clean=False,verbose=False,level=0,ignores=[]):
 	for dependency in dependencies: ignores = load(dependency,verbose=verbose,clean=clean,level=level+1,ignores=ignores)
 
 	result = call('make -f Makefile.RootCore',verbose=verbose)
-	
+	if verbose: print result
+
 	standalonePath = packagePath+'/StandAlone'
 	if not os.path.exists(standalonePath):
 		os.chdir(cwd)
