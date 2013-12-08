@@ -60,6 +60,8 @@ def call_grid(
 
 	os.chdir(directory)
 
+	exclude_sites = []
+
 	for grid_data in grid_datas:
 
 		grl = grid_data.get('GRL')
@@ -78,7 +80,7 @@ def call_grid(
 			analysis_home=os.path.basename(analysis_home),
 			)
 
-		prun_command = 'prun --bexec="{make_command}" --exec "{grid_command}" --rootVer="5.34.07" --cmtConfig="x86_64-slc5-gcc43-opt" --outputs="skim.root" --inDsTxt=input_datasets.txt --outDS={output_name} --inTarBall=send.tar.gz --nFilesPerJob={jobsize} --nGBPerJob=MAX --useContElementBoundary{merge}'
+		prun_command = 'prun --bexec="{make_command}" --exec "{grid_command}" --rootVer="5.34.07" --cmtConfig="x86_64-slc5-gcc43-opt" --outputs="skim.root" --inDsTxt=input_datasets.txt --outDS={output_name} --inTarBall=send.tar.gz --nFilesPerJob={jobsize}{exclude_sites} --nGBPerJob=MAX --useContElementBoundary{merge}'
 
 		for output_name,input_datasets in grid_data.get('datasets').items():
 
@@ -93,6 +95,7 @@ def call_grid(
 				output_name=output_name,
 				merge=' --mergeOutput' if merge else '',
 				jobsize=jobsize,
+				exclude_sites='--excludedSite='+','.join(exclude_sites) if exclude_sites else '',
 				)
 
 			#print final_prun_command
