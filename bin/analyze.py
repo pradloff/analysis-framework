@@ -179,7 +179,7 @@ def analyze(
 			merger.AddFile(directory+'/'+result)
 		merger.Merge()
 	else:
-		shutil.move(results[0],full_output)
+		shutil.move(directory+'/'+results[0],full_output)
 
 if __name__ == '__main__':
 
