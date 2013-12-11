@@ -158,20 +158,6 @@ class pchain():
 			value = self.branch_values[branch_name]
 			#pull single value from array
 			if isinstance(value,array): event.__dict__[branch_name] = value[0]
-			"""
-			#convert vectors to lists
-			elif any([isinstance(value,getattr(ROOT,branch_type)) for branch_type in [\
-				'vector<float,allocator<float> >',
-				'vector<int,allocator<int> >',
-				'vector<unsigned int,allocator<unsigned int> >'
-				]]): event.__dict__[branch_name] = list(value)
-			#convert vectors of vectors to lists of lists
-			elif any([isinstance(value,getattr(ROOT,branch_type)) for branch_type in [\
-				'vector<vector<float,allocator<float> >>',
-				'vector<vector<int,allocator<int> >>',
-				'vector<vector<unsigned int,allocator<unsigned int> >>'
-				]]): event.__dict__[branch_name] = [list(inner_vector) for inner_vector in value]
-			"""
 			else: event.__dict__[branch_name] = value
 		for branch_name in set(branch_names)-set(self.branch_names)-set(event.__dict__.keys()):
 			if not self.created_branches[branch_name]==event_function_name:
