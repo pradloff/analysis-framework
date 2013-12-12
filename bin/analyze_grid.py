@@ -62,7 +62,7 @@ def call_grid(
 
 	exclude_sites = [
 		'ANALY_INFN-NAPOLI',
-		'US.ANALY_MWT2_SL6',
+		'ANALY_MWT2_SL6',
 		]
 
 	for grid_data in grid_datas:
@@ -101,8 +101,8 @@ def call_grid(
 				exclude_sites=' --excludedSite='+','.join(exclude_sites) if exclude_sites else '',
 				)
 
-			#print final_prun_command
-			print call(final_prun_command,verbose=True).strip()
+			print final_prun_command
+			#print call(final_prun_command,verbose=True).strip()
 
 if __name__ == '__main__':
 
