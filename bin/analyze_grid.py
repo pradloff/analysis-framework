@@ -60,7 +60,10 @@ def call_grid(
 
 	os.chdir(directory)
 
-	exclude_sites = []
+	exclude_sites = [
+		'ANALY_INFN-NAPOLI',
+		'US.ANALY_MWT2_SL6',
+		]
 
 	for grid_data in grid_datas:
 
