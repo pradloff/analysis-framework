@@ -101,7 +101,7 @@ def call_grid(
 				exclude_sites=' --excludedSite="'+','.join(exclude_sites)+'"' if exclude_sites else '',
 				)
 
-			#print final_prun_command
+			print final_prun_command
 			print call(final_prun_command,verbose=True).strip()
 
 if __name__ == '__main__':
