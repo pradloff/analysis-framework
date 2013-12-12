@@ -98,11 +98,11 @@ def call_grid(
 				output_name=output_name,
 				merge=' --mergeOutput' if merge else '',
 				jobsize=jobsize,
-				exclude_sites=' --excludedSite='+','.join(exclude_sites) if exclude_sites else '',
+				exclude_sites=' --excludedSite="'+','.join(exclude_sites)+'"' if exclude_sites else '',
 				)
 
-			print final_prun_command
-			#print call(final_prun_command,verbose=True).strip()
+			#print final_prun_command
+			print call(final_prun_command,verbose=True).strip()
 
 if __name__ == '__main__':
 

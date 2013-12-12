@@ -42,7 +42,8 @@ class analysis():
 		self.pchain.add_files(self.files)
 		for event_function in self.event_functions:
 			self.required_branches += event_function.required_branches
-			self.create_branches.update(event_function.create_branches)
+			for branch_name,branch_type in event_function.create_branches.items():
+				if branch_type is not None and branch_name not in self.create_branches: self.create_branches[branch_name]=branch_type
 			self.keep_branches += event_function.keep_branches
 			self.pchain.create_branches(event_function.create_branches.keys(),event_function.__class__.__name__)
 		if self.keep_all:
@@ -186,6 +187,7 @@ class analyze_slice():
 		self.error_file.flush()
 		self.logger_file.flush()
 		self.exitcode = 0
+
 	def cleanup(self):
 		if self.output: self.output.Close()
 		self.logger_file.flush()

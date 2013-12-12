@@ -115,6 +115,7 @@ class pchain():
 
 	#creates virtual branch
 	def create_branch(self,branch_name,event_function_name):
+		if branch_name in self.created_branches: return
 		self.created_branches[branch_name] = event_function_name
 		if branch_name in self.get_available_branch_names(required=False):
 			self.set_branch(branch_name)
