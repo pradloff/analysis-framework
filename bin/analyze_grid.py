@@ -62,7 +62,7 @@ def call_grid(
 
 	exclude_sites = [
 		'ANALY_INFN-NAPOLI',
-		'ANALY_MWT2_SL6',
+		#'ANALY_MWT2_SL6',
 		]
 
 	for grid_data in grid_datas:
