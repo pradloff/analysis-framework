@@ -138,6 +138,8 @@ class analyze_slice():
 		milestone = 0.
 		time_start = time()
 		entry=0
+		done = 0.
+		rate = 0.
 
 		for entry in xrange(self.start,self.end):
 			#Create new event object (basically just a namespace)
@@ -182,6 +184,7 @@ class analyze_slice():
 				#Write meta-result function items to output
 				result.Write()
 
+		
 		print '{0}% complete, {1} Hz'.format(round(done,2), round(rate,2))	
 
 		self.error_file.flush()
