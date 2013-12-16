@@ -20,9 +20,7 @@ def get(
 
 		def poll(self):
 			exitcode = self.child.poll()
-			if exitcode: error = self.child.communicate()[1]
-			else: error = None
-			return exitcode,error
+			return exitcode
 
 		def kill(self):
 			try: self.child.kill()
@@ -38,7 +36,7 @@ def get(
 	for grid_data in grid_datas:
 		for output_dataset in grid_data['datasets']:
 			child_call = 'dq2-get -f "*root*" {dataset}'.format(
-				dataset = output_dataset,
+				dataset = output_dataset if output_dataset.endswith('/') else output_dataset+'/',
 				)
 			watchers.append(watcher(child_call))
 
@@ -53,10 +51,10 @@ def get(
 			watcher.start()
 			processes.append(watcher)
 		for process in processes:
-			exitcode,error = process.poll()
+			exitcode = process.poll()
 			if exitcode is not None:
-				if exitcode: print 'Failed in call of \n{0}\nError:\n{1}\n'.format(process.child_call,error)
-				else: print 'Finished call of \n{0}\n'.format(process.child_call)
+				if exitcode: print 'Failed {0}'.format(process.child_call)
+				else: print 'Finished {0}'.format(process.child_call)
 				finished.append(process)
 		for process in finished:
 			del processes[processes.index(process)]
@@ -65,10 +63,10 @@ def get(
 	#Monitor mode
 	while processes:
 		for process in processes:
-			exitcode,error = process.poll()
+			exitcode = process.poll()
 			if exitcode is not None:
-				if exitcode: print 'Failed in call of \n{0}\nError:\n{1}\n'.format(process.child_call,error)
-				else: print 'Finished call of \n{0}\n'.format(process.child_call)
+				if exitcode: print 'Failed {0}'.format(process.child_call)
+				else: print 'Finished {0}'.format(process.child_call)
 				finished.append(process)
 		for process in finished:
 			del processes[processes.index(process)]
