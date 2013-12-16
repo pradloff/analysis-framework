@@ -27,6 +27,11 @@ def get(
 			try: self.child.kill()
 			except OSError: pass
 
+	#parse all first because we change directory and finds json problems
+	grid_datas = []
+	for grid_json in grid_jsons:
+		with open(grid_json) as f: grid_datas.append(json.load(f))
+
 	watchers = []
 
 	for grid_data in grid_datas:
