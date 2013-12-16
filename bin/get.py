@@ -35,7 +35,7 @@ def get(
 
 	for grid_data in grid_datas:
 		for output_dataset in grid_data['datasets']:
-			child_call = 'dq2-get -T 1,20 -f "*root*" -H {dataset} {dataset}'.format(
+			child_call = 'dq2-get -T 1,20 -H {dataset} {dataset}'.format(
 				dataset = output_dataset if output_dataset.endswith('/') else output_dataset+'/',
 				)
 			watchers.append(watcher(child_call))
