@@ -41,7 +41,7 @@ def call_grid(
 	#Monitor/submit mode
 	while 1:
 		finished = []
-		for i in range(num_processes-len(processes))
+		for i in range(num_processes-len(processes)):
 			try: watcher = watchers.pop()
 			except IndexError: break
 			watcher.start()
