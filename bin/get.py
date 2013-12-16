@@ -15,7 +15,7 @@ def get(
 			self.child_call = child_call
 	
 		def start(self):
-			subprocess.Popen(self.child_call.split())
+			self.child = subprocess.Popen(self.child_call.split())
 
 		def poll(self):
 			exitcode = self.child.poll()
