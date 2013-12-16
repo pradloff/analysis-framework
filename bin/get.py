@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-def call_grid(
+def get(
 	grid_jsons,
 	num_processes=1,
 	):
