@@ -8,6 +8,7 @@ def get(
 	import os
 	import json
 	import subprocess
+	from time import sleep
 
 	class watcher():
 
