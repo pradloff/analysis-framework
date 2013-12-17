@@ -45,11 +45,6 @@ def get(
 	#Monitor/submit mode
 	while 1:
 		finished = []
-		for i in range(num_processes-len(processes)):
-			try: watcher = watchers.pop()
-			except IndexError: break
-			watcher.start()
-			processes.append(watcher)
 		for process in processes:
 			exitcode = process.poll()
 			if exitcode is not None:
@@ -58,20 +53,14 @@ def get(
 				finished.append(process)
 		for process in finished:
 			del processes[processes.index(process)]
+			try: 
+				watcher = watchers.pop()
+				watcher.start()
+				processes.append(watcher)
+			except IndexError: pass
+		if not processes: break
 		sleep(2)
-
-	#Monitor mode
-	while processes:
-		for process in processes:
-			exitcode = process.poll()
-			if exitcode is not None:
-				if exitcode: print 'Failed {0}'.format(process.child_call)
-				else: print 'Finished {0}'.format(process.child_call)
-				finished.append(process)
-		for process in finished:
-			del processes[processes.index(process)]
-		sleep(2)		
-		
+	
 
 if __name__ == '__main__':
 
