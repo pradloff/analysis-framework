@@ -75,7 +75,7 @@ if __name__ == '__main__':
 
 	parser = argparse.ArgumentParser(prog='get.py',description='Get grid files using grid json files.')
 	parser.add_argument('-p','--processes',default=1,dest='PROCESSES',type=int,help='Number of processes to use.')
-	parser.add_argument(dest='GRID',required=True,nargs='+',help='Similar to [-t --textinput] except containing datasets on grid.  Organize datasets in json file, indexed by output dataset name.')
+	parser.add_argument(dest='GRID',nargs='+',help='Similar to [-t --textinput] except containing datasets on grid.  Organize datasets in json file, indexed by output dataset name.')
 
 	args = parser.parse_args()
 		
