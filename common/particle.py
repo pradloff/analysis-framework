@@ -24,7 +24,7 @@ class particle():
 		if '__particle__' in self.__dict__: self().SetPtEtaPhiE(pt,eta,phi,e)
 		else:
 			__particle__ = ROOT.TLorentzVector()
-			__particle__.SetPtEtaPhiM(pt,eta,phi,e)
+			__particle__.SetPtEtaPhiE(pt,eta,phi,e)
 			self.set_particle(__particle__)
 
 	def set_pt_eta_phi_m(self,pt,eta,phi,m):

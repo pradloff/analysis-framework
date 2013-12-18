@@ -112,7 +112,7 @@ class cutflow(result_function):
 	def __call__(self,event):
 		for i in range(event.__stop__):
 			self.results['cutflow'].Fill(i)
-			self.results['cutflow_weighted'].Fill(i)
+			self.results['cutflow_weighted'].Fill(i,event.__weight__)
 
 lookup_description = {
 	'Char_t':'B',
