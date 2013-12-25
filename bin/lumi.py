@@ -417,8 +417,6 @@ if __name__=='__main__':
 	parser.add_argument('-p',dest='PROCESSES',default=1,type=int,help='number of processes to gather info')
 	args = parser.parse_args()
 
-	for 
-
 	#Get data luminosity
 	data = GRL()
 	c = ROOT.TChain('lumi')
