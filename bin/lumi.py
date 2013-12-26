@@ -331,7 +331,7 @@ def get_cross_sections(cross_section_file):
 		for line in f.readlines():
 			if line.lstrip().startswith('#'): continue
 			mc_channel_number = line.split()[0]
-			cross_section = line.split()[1]*line.split()[2]
+			cross_section = float(line.split()[1])*float(line.split()[2])
 			d[mc_channel_number] = cross_section
 	return d
 
