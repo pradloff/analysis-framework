@@ -359,7 +359,7 @@ if __name__=='__main__':
 	import code
 
 	parser = argparse.ArgumentParser(prog='lumi.py',description='Useful caller for getting MC scaling and lumi info.')
-	#parser.add_argument(dest='TRIGGER')
+	parser.add_argument(dest='TRIGGER')
 	parser.add_argument('-x','--xml',dest='GRL',required=True,help='grl xml')
 	parser.add_argument('-d',dest='D3PD',default=[],nargs='+',required=True,help='d3pds containing luminosity info trees')
 	parser.add_argument('-m',dest='SKIM',default=[],nargs='+',required=True,help='Directory containing skimmed MC/Data with weighted cross-section info')
