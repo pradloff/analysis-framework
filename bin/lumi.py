@@ -10,6 +10,7 @@ from multiprocessing import Queue, cpu_count, Process
 from Queue import Empty
 import time
 import traceback
+import json
 
 class query():
 	def __init__(self):
