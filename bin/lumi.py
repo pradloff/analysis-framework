@@ -318,7 +318,7 @@ def get_count(file_,tree):
 def get_counts(files,tree):
 	d = {}
 	for file_ in files:
-		mc_channel_number,counts = get_count(file_)
+		mc_channel_number,counts = get_count(file_,tree)
 		if mc_channel_number not in d: d[mc_channel_number] = 0.
 		d[mc_channel_number]+=counts
 	return d
