@@ -340,6 +340,7 @@ if __name__=='__main__':
 	import sys
 	import argparse
 	import os
+	import code
 
 	parser = argparse.ArgumentParser(prog='lumi.py',description='Useful caller for getting MC scaling and lumi info.')
 	parser.add_argument(dest='TRIGGER')
@@ -355,6 +356,7 @@ if __name__=='__main__':
 	cross_sections = get_cross_sections(args.XSEC)
 	counts = get_counts(args.SKIM,args.TREE)
 
+	code.interact(local=locals())
 	sys.exit()
 
 	#Get data luminosity
