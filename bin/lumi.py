@@ -449,7 +449,7 @@ if __name__=='__main__':
 	for mc_channel_number in counts:
 		if not mc_channel_number: continue
 		if mc_channel_number not in cross_sections: raise KeyError
-		result['lumi_event_weight'][mc_channel_number] = cross_sections[mc_channel_number]*luminosity/counts[mc_channel_number]
+		result['lumi_event_weight'][mc_channel_number] = cross_sections[mc_channel_number]*integrated_luminosity/counts[mc_channel_number]
 
 	with open(args.OUTPUT,'w') as f: f.write(json.dumps(result,indent=4))
 		
