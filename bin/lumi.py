@@ -309,16 +309,27 @@ def get_count(file_,tree):
 	f = ROOT.TFile.Open(file_)
 	if not f:
 		f.Close()
+		return None 
+	if not hasattr(f,tree):
+		f.Close()
 		return None
 	t = getattr(f,tree)
+	if not hasattr(t,'mc_channel_number'):
+		f.Close()
+		return None		
 	t.SetBranchStatus('*',0)
 	t.SetBranchStatus('mc_channel_number',1)
 	if not t.GetEntries():
 		f.Close()
 		return None
 	t.GetEntry(0)
+	if not hasattr(f,'cutflow_weighted'):
+		f.Close()
+		return None
+	mc_channel_number = t.mc_channel_number
+	cutflow_input = f.cutflow_weighted.GetBinContent(1)
 	f.Close()
-	return t.mc_channel_number,f.cutflow_weighted.GetBinContent(1)
+	return mc_channel_number,cutflow_input
 
 def get_counts(files,tree):
 	d = {}
