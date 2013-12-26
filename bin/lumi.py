@@ -359,7 +359,7 @@ if __name__=='__main__':
 	import code
 
 	parser = argparse.ArgumentParser(prog='lumi.py',description='Useful caller for getting MC scaling and lumi info.')
-	parser.add_argument(dest='TRIGGER')
+	#parser.add_argument(dest='TRIGGER')
 	parser.add_argument('-x','--xml',dest='GRL',required=True,help='grl xml')
 	parser.add_argument('-d',dest='D3PD',default=[],nargs='+',required=True,help='d3pds containing luminosity info trees')
 	parser.add_argument('-m',dest='SKIM',default=[],nargs='+',required=True,help='Directory containing skimmed MC/Data with weighted cross-section info')
@@ -371,9 +371,6 @@ if __name__=='__main__':
 
 	cross_sections = get_cross_sections(args.XSEC)
 	counts = get_counts(args.SKIM,args.TREE)
-
-	code.interact(local=locals())
-	sys.exit()
 
 	#Get data luminosity
 	data = GRL()
@@ -433,4 +430,23 @@ if __name__=='__main__':
 		for process in processes: process.terminate()
 		for process in processes: process.join()
 		if interrupted: sys.exit(1)
+
+	integrated_luminosity = sum(luminosity[runlb]*(time_end-time_start) for runlb,(time_start,time_end) in times.items() if all([
+		runlb in luminosity,
+		runlb>>32 in grl,
+		runlb_to_lb(runlb) in grl[runlb>>32],
+		runlb>>32 in data,
+		runlb_to_lb(runlb) in data[runlb>>32],
+		]))/10**15
+
+	result = {}
+	result['luminosity'] = integrated_luminosity
+	result['lumi_event_weight'] = {}
+	for mc_channel_number in counts:
+		if not mc_channel_number: continue
+		if mc_channel_number not in cross_sections: raise KeyError
+		result['lumi_event_weight'][mc_channel_number] = cross_sections[mc_channel_number]*luminosity/counts[mc_channel_number]
+
+	with open(args.OUTPUT,'w') as f: f.write(json.dumps(result,indent=4))
+		
 
