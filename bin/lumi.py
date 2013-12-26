@@ -307,12 +307,17 @@ def get_run_info(trigger,queue_in,queue_out):
 
 def get_count(file_,tree):
 	f = ROOT.TFile.Open(file_)
-	if not f: return None
+	if not f:
+		f.Close()
+		return None
 	t = getattr(f,tree)
 	t.SetBranchStatus('*',0)
 	t.SetBranchStatus('mc_channel_number',1)
-	if not t.GetEntries(): return None
+	if not t.GetEntries():
+		f.Close()
+		return None
 	t.GetEntry(0)
+	f.Close()
 	return t.mc_channel_number,f.cutflow_weighted.GetBinContent(1)
 
 def get_counts(files,tree):
