@@ -311,16 +311,14 @@ def get_count(file_,tree):
 	t = getattr(f,tree)
 	t.SetBranchStatus('*',0)
 	t.SetBranchStatus('mc_channel_number',1)
-	t.mc_channel_number
+	if not t.GetEntries(): return None
+	t.GetEntry(0)
 	return t.mc_channel_number,f.cutflow_weighted.GetBinContent(1)
 
 def get_counts(files,tree):
 	d = {}
 	for file_ in files:
-		try:
-			mc_channel_number,counts = get_count(file_)
-		except Exception:
-			continue
+		mc_channel_number,counts = get_count(file_)
 		if mc_channel_number not in d: d[mc_channel_number] = 0.
 		d[mc_channel_number]+=counts
 	return d
