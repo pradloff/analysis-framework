@@ -382,7 +382,7 @@ def get_count(file_,tree):
 	t.mc_channel_number
 	return t.mc_channel_number,f.cutflow_weighted.GetBinContent(1)
 
-def get_counts(files):
+def get_counts(files,tree):
 	d = {}
 	for file_ in files:
 		try:
@@ -413,9 +413,17 @@ if __name__=='__main__':
 	parser.add_argument(dest='TRIGGER')
 	parser.add_argument('-x','--xml',dest='GRL',required=True,help='grl xml')
 	parser.add_argument('-d',dest='D3PD',default=[],nargs='+',required=True,help='d3pds containing luminosity info trees')
-	parser.add_argument('-m',dest='SKIM',nargs='+',required=True,help='Directory containing skimmed MC/Data with weighted cross-section info')
+	parser.add_argument('-m',dest='SKIM',default=[],nargs='+',required=True,help='Directory containing skimmed MC/Data with weighted cross-section info')
+	parser.add_argument('-c',dest='XSEC',required=True,help='File containing cross-section information')
 	parser.add_argument('-p',dest='PROCESSES',default=1,type=int,help='number of processes to gather info')
+	parser.add_argument('-o',dest='OUTPUT',required=True,help='output luminosity/cross-section information')
+	parser.add_argument('-t',dest='TREE',required=True,help='Tree containing event info')
 	args = parser.parse_args()
+
+	cross_sections = get_cross_sections(args.XSEC)
+	counts = get_counts(args.SKIM,args.TREE)
+
+	sys.exit()
 
 	#Get data luminosity
 	data = GRL()
