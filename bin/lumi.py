@@ -431,13 +431,17 @@ if __name__=='__main__':
 		for process in processes: process.join()
 		if interrupted: sys.exit(1)
 
-	integrated_luminosity = sum(luminosity[runlb]*(time_end-time_start) for runlb,(time_start,time_end) in times.items() if all([
-		runlb in luminosity,
-		runlb>>32 in grl,
-		runlb_to_lb(runlb) in grl[runlb>>32],
-		runlb>>32 in data,
-		runlb_to_lb(runlb) in data[runlb>>32],
-		]))/10**15
+	integrated_luminosity = 0.
+	for runlb,(time_start,time_end) in times.items():
+		run = runlb>>32
+		lb = runlb_to_lb(runlb)
+		if runlb not in luminosity: continue
+		if run not in grl: continue
+		if lb not in grl[run]: continue
+		if run not in data: continue
+		if lb not in data[run]: continue
+		integrated_luminosity+= luminosity[runlb]*(time_end-time_start)
+	integrated_luminosity/=10**15
 
 	result = {}
 	result['luminosity'] = integrated_luminosity
