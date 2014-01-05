@@ -447,6 +447,7 @@ if __name__=='__main__':
 	result = {}
 	result['luminosity'] = integrated_luminosity
 	result['lumi_event_weight'] = {}
+	code.interact(local=locals())
 	for mc_channel_number in counts:
 		if not mc_channel_number: continue
 		if mc_channel_number not in cross_sections: raise KeyError
