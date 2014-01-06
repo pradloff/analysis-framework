@@ -368,6 +368,7 @@ if __name__=='__main__':
 	parser.add_argument('-p',dest='PROCESSES',default=1,type=int,help='number of processes to gather info')
 	parser.add_argument('-o',dest='OUTPUT',required=True,help='output luminosity/cross-section information')
 	parser.add_argument('-t',dest='TREE',required=True,help='Tree containing event info')
+	parser.add_argument('--inspect',dest='INSPECT',action='store_true',help='Dumps to python console to inspect elements')
 	args = parser.parse_args()
 
 	cross_sections = get_cross_sections(args.XSEC)
@@ -452,6 +453,9 @@ if __name__=='__main__':
 		if not mc_channel_number: continue
 		if mc_channel_number not in cross_sections: raise KeyError
 		result['lumi_event_weight'][mc_channel_number] = cross_sections[mc_channel_number]*integrated_luminosity/counts[mc_channel_number]
+
+	if args.INSPECT:
+		code.interact(local=locals())
 
 	with open(args.OUTPUT,'w') as f: f.write(json.dumps(result,indent=4))
 		
