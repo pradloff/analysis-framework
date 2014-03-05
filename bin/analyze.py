@@ -1,5 +1,25 @@
 #!/usr/bin/env python
 
+if __name__ == '__main__':
+
+	import sys
+	import argparse
+	import os
+
+	parser = argparse.ArgumentParser(prog='analyze.py',description='Useful caller for analyses.')
+	parser.add_argument('-i','--input',default=[],dest='INPUT', nargs='+',help='Input file(s) to analyze.')
+	parser.add_argument('-t','--textinput',default=None,dest='TEXTINPUT',help='Text file containing input file(s) to analyze.  Separate files by line.')
+	parser.add_argument('-m','--module',dest='MODULE',required=True,help='Module containing analysis class.')
+	parser.add_argument('-a','--analysis',dest='ANALYSIS',required=True,help='Name of analysis to use.')
+	parser.add_argument('-o','--output',dest='OUTPUT',required=True,help='Name to give output ROOT file.')
+	parser.add_argument('--entries',default=None,dest='ENTRIES',help='Number of entries to process.')	
+	parser.add_argument('-n','--tree',dest='TREE',required=True,help='TTree name which contains event information.')
+	parser.add_argument('-g','--grl',default=[],dest='GRL',nargs='+',help='Good run list(s) XML file to use.')
+	parser.add_argument('-p','--processes',default=1,dest='PROCESSES',type=int,help='Number of processes to use.')
+	parser.add_argument('--keep',default=False,dest='KEEP',action='store_true',help='Keep all branches, default False')
+
+	args = parser.parse_args()
+
 import os
 import sys
 import ROOT
@@ -181,24 +201,6 @@ def analyze(
 
 if __name__ == '__main__':
 
-	import sys
-	import argparse
-	import os
-
-	parser = argparse.ArgumentParser(prog='analyze.py',description='Useful caller for analyses.')
-	parser.add_argument('-i','--input',default=[],dest='INPUT', nargs='+',help='Input file(s) to analyze.')
-	parser.add_argument('-t','--textinput',default=None,dest='TEXTINPUT',help='Text file containing input file(s) to analyze.  Separate files by line.')
-	parser.add_argument('-m','--module',dest='MODULE',required=True,help='Module containing analysis class.')
-	parser.add_argument('-a','--analysis',dest='ANALYSIS',required=True,help='Name of analysis to use.')
-	parser.add_argument('-o','--output',dest='OUTPUT',required=True,help='Name to give output ROOT file.')
-	parser.add_argument('--entries',default=None,dest='ENTRIES',help='Number of entries to process.')	
-	parser.add_argument('-n','--tree',dest='TREE',required=True,help='TTree name which contains event information.')
-	parser.add_argument('-g','--grl',default=[],dest='GRL',nargs='+',help='Good run list(s) XML file to use.')
-	parser.add_argument('-p','--processes',default=1,dest='PROCESSES',type=int,help='Number of processes to use.')
-	parser.add_argument('--keep',default=False,dest='KEEP',action='store_true',help='Keep all branches, default False')
-
-	args = parser.parse_args()
-	
 	files = []
 	
 	if args.INPUT:
