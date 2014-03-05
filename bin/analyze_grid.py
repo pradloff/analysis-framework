@@ -89,6 +89,9 @@ def call_grid(
 
 		for output_name,input_datasets in grid_data.get('datasets').items():
 
+			if 'steering' in grid_data:
+				output_name = output_name.format(**grid_data['steering'])
+
 			with open('input_datasets.txt','w') as f:
 				for input_dataset in input_datasets:
 					f.write(input_dataset+'\n')
