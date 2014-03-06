@@ -64,6 +64,7 @@ def call_grid(
 		'ANALY_INFN-NAPOLI',
 		'ANALY_ARC',
 		'ANALY_INFN-FRASCATI',
+		'ANALY_FZK_SHORT',
 		#'ANALY_MWT2_SL6',
 		]
 
