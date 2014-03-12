@@ -124,11 +124,13 @@ class analyze_slice():
 		#tie results to output file
 		for result_function in self.analysis_instance.result_functions:
 			for result in result_function.results.values():
-				result.SetDirectory(self.output)
+				try: result.SetDirectory(self.output)
+				except AttributeError: pass
 
 		for meta_result_function in self.analysis_instance.meta_result_functions:
 			for result in meta_result_function.results.values():
-				result.SetDirectory(self.output)
+				try: result.SetDirectory(self.output)
+				except AttributeError: pass
 
 		self.error_file.flush()
 		self.logger_file.flush()
