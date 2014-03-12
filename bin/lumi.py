@@ -94,7 +94,7 @@ class luminosity_span_getter(query):
 
 	def __call__(self,runlb_span):
 		min_runlb,max_runlb = runlb_span
-		folder = self.get_folder('/TRIGGER/OFLLUMI/LBLESTOFL')
+		folder = self.get_folder('/TRIGGER/LUMI/LBLESTONL')
 		channel = cool.ChannelSelection(0)
 		luminosity = {}
 		folder_iterator = folder.browseObjects(min_runlb,max_runlb,channel)
@@ -443,10 +443,7 @@ if __name__=='__main__':
 		if lb not in grl[run]: continue
 		if run not in data: continue
 		if lb not in data[run]: continue
-		if runlb not in prescales: continue
-		prescale = prescales[runlb]
-		if prescale<0.: continue
-		integrated_luminosity+= luminosity[runlb]*(time_end-time_start)/prescale
+		integrated_luminosity+= luminosity[runlb]*(time_end-time_start)
 	integrated_luminosity/=10**15
 	"""
 	result = {}
