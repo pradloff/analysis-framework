@@ -63,6 +63,8 @@ def call_grid(
 	exclude_sites = [
 		'ANALY_INFN-NAPOLI',
 		'ANALY_ARC',
+		'ANALY_INFN-FRASCATI',
+		'ANALY_FZK_SHORT',
 		#'ANALY_MWT2_SL6',
 		]
 
@@ -87,6 +89,9 @@ def call_grid(
 		prun_command = 'prun --bexec="{make_command}" --exec "{grid_command}" --rootVer="5.34.07" --cmtConfig="x86_64-slc5-gcc43-opt" --outputs="skim.root" --inDsTxt=input_datasets.txt --outDS={output_name} --inTarBall=send.tar.gz --nFilesPerJob={jobsize}{exclude_sites} --nGBPerJob=MAX --useContElementBoundary{merge}'
 
 		for output_name,input_datasets in grid_data.get('datasets').items():
+
+			if 'steering' in grid_data:
+				output_name = output_name.format(**grid_data['steering'])
 
 			with open('input_datasets.txt','w') as f:
 				for input_dataset in input_datasets:

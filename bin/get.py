@@ -35,6 +35,9 @@ def get(
 
 	for grid_data in grid_datas:
 		for output_dataset in grid_data['datasets']:
+			if 'steering' in grid_data:
+				output_dataset = output_dataset.format(**grid_data['steering'])
+
 			child_call = 'dq2-get -T 1,20 -f \"*.root\" -H {dataset} {dataset}'.format(
 				dataset = output_dataset if output_dataset.endswith('/') else output_dataset+'/',
 				)

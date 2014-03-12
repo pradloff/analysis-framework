@@ -31,12 +31,16 @@ class compute_mc_weight(event_function):
 	def __init__(self):
 		event_function.__init__(self)
 
+
+		"""
 		self.required_branches += [
 			'RunNumber',
 			]
 		self.keep_branches += [
 			'RunNumber',
 			]
+		"""
+
 		self.create_branches['mc_channel_number'] = 'int'
 		self.create_branches['mc_event_weight'] = 'float'
 		self.create_branches['is_mc'] = 'bool'
