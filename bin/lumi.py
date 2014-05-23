@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from PyCool import cool
+#from PyCool import cool
 import argparse
 from xml.dom.minidom import parseString
 import ROOT
@@ -94,7 +94,7 @@ class luminosity_span_getter(query):
 
 	def __call__(self,runlb_span):
 		min_runlb,max_runlb = runlb_span
-		folder = self.get_folder('/TRIGGER/OFLLUMI/LBLESTOFL')
+		folder = self.get_folder('/TRIGGER/LUMI/LBLESTONL')
 		channel = cool.ChannelSelection(0)
 		luminosity = {}
 		folder_iterator = folder.browseObjects(min_runlb,max_runlb,channel)
@@ -360,12 +360,13 @@ if __name__=='__main__':
 	import code
 
 	parser = argparse.ArgumentParser(prog='lumi.py',description='Useful caller for getting MC scaling and lumi info.')
-	parser.add_argument(dest='TRIGGER')
-	parser.add_argument('-x','--xml',dest='GRL',required=True,help='grl xml')
-	parser.add_argument('-d',dest='D3PD',default=[],nargs='+',required=True,help='d3pds containing luminosity info trees')
+	#parser.add_argument(dest='TRIGGER')
+	parser.add_argument(dest='LUMINOSITY',type=float)
+	#parser.add_argument('-x','--xml',dest='GRL',required=True,help='grl xml')
+	#parser.add_argument('-d',dest='D3PD',default=[],nargs='+',required=True,help='d3pds containing luminosity info trees')
 	parser.add_argument('-m',dest='SKIM',default=[],nargs='+',required=True,help='Directory containing skimmed MC/Data with weighted cross-section info')
 	parser.add_argument('-c',dest='XSEC',required=True,help='File containing cross-section information')
-	parser.add_argument('-p',dest='PROCESSES',default=1,type=int,help='number of processes to gather info')
+	#parser.add_argument('-p',dest='PROCESSES',default=1,type=int,help='number of processes to gather info')
 	parser.add_argument('-o',dest='OUTPUT',required=True,help='output luminosity/cross-section information')
 	parser.add_argument('-t',dest='TREE',required=True,help='Tree containing event info')
 	parser.add_argument('--inspect',dest='INSPECT',action='store_true',help='Dumps to python console to inspect elements')
@@ -373,7 +374,7 @@ if __name__=='__main__':
 
 	cross_sections = get_cross_sections(args.XSEC)
 	counts = get_counts(args.SKIM,args.TREE)
-
+	"""
 	#Get data luminosity
 	data = GRL()
 	c = ROOT.TChain('lumi')
@@ -442,16 +443,14 @@ if __name__=='__main__':
 		if lb not in grl[run]: continue
 		if run not in data: continue
 		if lb not in data[run]: continue
-		if runlb not in prescales: continue
-		prescale = prescales[runlb]
-		if prescale<0.: continue
-		integrated_luminosity+= luminosity[runlb]*(time_end-time_start)/prescale
+		integrated_luminosity+= luminosity[runlb]*(time_end-time_start)
 	integrated_luminosity/=10**15
-
+	"""
 	result = {}
+	integrated_luminosity = args.LUMINOSITY
 	result['luminosity'] = integrated_luminosity
 	result['lumi_event_weight'] = {}
-
+	
 	for mc_channel_number in counts:
 		if not mc_channel_number: continue
 		if mc_channel_number not in cross_sections: raise KeyError
