@@ -10,6 +10,7 @@ def call_grid(
 	keep=False,
 	merge=False,
 	jobsize=1,
+    help,
 	):
 
 	import os
@@ -27,6 +28,14 @@ def call_grid(
 	for grid_json in grid_jsons:
 		with open(grid_json) as f: grid_datas.append(json.load(f))
 
+	analysis_home = os.getenv('ANALYSISHOME')
+	analysis_framework = os.getenv('ANALYSISFRAMEWORK')
+
+	analysis_constructor = __import__(module_name,globals(),locals(),[analysis_name]).__dict__[analysis_name]
+
+	analysis_instance = analysis_constructor()
+    if help: sys.exit(2)
+
 	while True:
 		directory = '/tmp/'+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
 		try: os.mkdir(directory)
@@ -41,12 +50,7 @@ def call_grid(
 	atexit.register(shutil.rmtree,os.path.abspath(directory))
 	os.chdir(directory)
 
-	analysis_home = os.getenv('ANALYSISHOME')
-	analysis_framework = os.getenv('ANALYSISFRAMEWORK')
 
-	analysis_constructor = __import__(module_name,globals(),locals(),[analysis_name]).__dict__[analysis_name]
-
-	analysis_instance = analysis_constructor()
 
 	#create tarball of working directory
 	print 'Creating tarball'
@@ -68,11 +72,18 @@ def call_grid(
 		#'ANALY_MWT2_SL6',
 		]
 
+    args = []
+
+    for i,(k,g) in enumerate(itertools.groupby(sys.argv,lambda x:x=='-')):
+        if not i: continue
+        g=list(g)
+        args += g[:]
+    
 	for grid_data in grid_datas:
 
 		grl = grid_data.get('GRL')
 
-		grid_command = 'unset tmp; unset tmpdir; source analysis-framework/setup.sh; source {analysis_home}/setup.sh; analyze.py -m {module} -a {analysis} -i \`echo %IN | sed \'s/,/ /g\'\` -o skim.root -p {processes} -n {tree}{keep}{grl}'.format(
+		grid_command = 'unset tmp; unset tmpdir; source analysis-framework/setup.sh; source {analysis_home}/setup.sh; analyze.py -m {module} -a {analysis} -i \`echo %IN | sed \'s/,/ /g\'\` -o skim.root -p {processes} -n {tree}{keep}{grl} {args}'.format(
 			module=module_name,
 			analysis=analysis_name,
 			tree=tree,
@@ -80,13 +91,14 @@ def call_grid(
 			analysis_home=os.path.basename(analysis_home),
 			keep=' --keep' if keep else '',
 			grl = ' -g {0}'.format(' '.join(grl)) if grl else '',
+            args = ' '.join(args)
 			)
 	
 		make_command = 'unset tmp; unset tmpdir; source analysis-framework/setup.sh; source {analysis_home}/setup.sh; python {analysis_home}/make_externals.py'.format(
 			analysis_home=os.path.basename(analysis_home),
 			)
 
-		prun_command = 'prun --bexec="{make_command}" --exec "{grid_command}" --rootVer="5.34.07" --cmtConfig="x86_64-slc5-gcc43-opt" --outputs="skim.root" --inDsTxt=input_datasets.txt --outDS={output_name} --inTarBall=send.tar.gz --nFilesPerJob={jobsize}{exclude_sites} --nGBPerJob=MAX --useContElementBoundary{merge}'
+		prun_command = 'prun --bexec="{make_command}" --exec "{grid_command}" --rootVer="5.34.07" --cmtConfig="x86_64-slc5-gcc43-opt" --outputs="skim.root" --inDsTxt=input_datasets.txt --outDS={output_name} --inTarBall=send.tar.gz {jobsize}{exclude_sites}{ngb} --useContElementBoundary{merge}'
 
 		for output_name,input_datasets in grid_data.get('datasets').items():
 
@@ -103,8 +115,9 @@ def call_grid(
 				make_command=make_command,
 				output_name=output_name,
 				merge=' --mergeOutput' if merge else '',
-				jobsize=jobsize,
+				jobsize='--nFilesPerJob='+str(jobsize) if jobsize else '',
 				exclude_sites=' --excludedSite="'+','.join(exclude_sites)+'"' if exclude_sites else '',
+                ngb=' --nGBPerJob=MAX' if not jobsize else '',
 				)
 
 			print final_prun_command
@@ -123,10 +136,26 @@ if __name__ == '__main__':
 	parser.add_argument('--keep',default=False,dest='KEEP',action='store_true',help='Keep all branches, default False')
 	parser.add_argument('--grid',dest='GRID',required=True,nargs='+',help='Similar to [-t --textinput] except containing datasets on grid.  Organize datasets in json file, indexed by output dataset name.')
 	parser.add_argument('--merge',dest='MERGE',action='store_true',help='Merge output of grid jobs.')
-	parser.add_argument('--jobsize',default=1,type=int,dest='JOBSIZE',help='Number of files per job.')
+	parser.add_argument('--jobsize',default=0,type=int,dest='JOBSIZE',help='Number of files per job.')
 
-	args = parser.parse_args()
-		
+    args = []
+    for i,(k,g) in enumerate(itertools.groupby(sys.argv,lambda x:x=='-')):
+        g=list(g)
+        args += g[1:]
+        break
+
+    help = False
+
+    for h in ['-h','--help']:
+        try: 
+            args.remove(h)
+            help=True
+        except ValueError:
+            pass
+
+	args = parser.parse_args(args)
+	if help: parser.print_help()
+
 	call_grid(
 		args.MODULE,
 		args.ANALYSIS,
@@ -136,6 +165,7 @@ if __name__ == '__main__':
 		num_processes=args.PROCESSES,
 		keep=args.KEEP,
 		merge=args.MERGE,
-		jobsize=args.JOBSIZE,		
+		jobsize=args.JOBSIZE,
+        help,		
 		)
 	

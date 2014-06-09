@@ -5,6 +5,7 @@ if __name__ == '__main__':
 	import sys
 	import argparse
 	import os
+    import itertools
 
 	parser = argparse.ArgumentParser(prog='analyze.py',description='Useful caller for analyses.')
 	parser.add_argument('-i','--input',default=[],dest='INPUT', nargs='+',help='Input file(s) to analyze.')
@@ -18,7 +19,23 @@ if __name__ == '__main__':
 	parser.add_argument('-p','--processes',default=1,dest='PROCESSES',type=int,help='Number of processes to use.')
 	parser.add_argument('--keep',default=False,dest='KEEP',action='store_true',help='Keep all branches, default False')
 
-	args = parser.parse_args()
+    help = False
+
+    args = []
+    for i,(k,g) in enumerate(itertools.groupby(sys.argv,lambda x:x=='-')):
+        g=list(g)
+        args += g[1:]
+        break
+
+    for h in ['-h','--help']:
+        try: 
+            args.remove(h)
+            help=True
+        except ValueError:
+            pass
+    
+    args = parser.parse_args(args)
+    if help: parser.print_help()
 
 import os
 import sys
@@ -35,15 +52,16 @@ import stat
 import atexit
 
 def analyze(
-	module_name,
-	analysis_name,
-	files,
-	tree,
-	grl,
-	num_processes,
-	output,
-	entries,
-	keep,
+    module_name,
+    analysis_name,
+    files,
+    tree,
+    grl,
+    num_processes,
+    output,
+    entries,
+    keep,
+    help,
 	):
 
 	class watcher():
@@ -87,6 +105,21 @@ def analyze(
 
 	full_output = os.path.abspath(output)
 
+	analysis_constructor = __import__(module_name,globals(),locals(),[analysis_name]).__dict__[analysis_name]
+
+    analysis_instance = analysis_constructor()
+    if help: sys.exit(2)
+
+	generate_dictionaries()
+
+	print 'Validating analysis'
+
+	analysis_instance.tree = tree
+	analysis_instance.grl = grl
+	analysis_instance.add_file(*files)
+	analysis_instance.setup_chain()
+
+	print 'Analysis validated'
 
 	while True:
 		directory = '/tmp/'+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
@@ -101,20 +134,6 @@ def analyze(
 	atexit.register(os.chdir,cwd)
 	atexit.register(shutil.rmtree,os.path.abspath(directory))
 	os.chdir(directory)
-
-	print 'Validating analysis'
-
-	analysis_constructor = __import__(module_name,globals(),locals(),[analysis_name]).__dict__[analysis_name]
-
-	generate_dictionaries()
-
-	analysis_instance = analysis_constructor()
-	analysis_instance.tree = tree
-	analysis_instance.grl = grl
-	analysis_instance.add_file(*files)
-	analysis_instance.setup_chain()
-
-	print 'Analysis validated'
 
 	if entries is not None:
 		entries = min([int(entries),analysis_instance.pchain.get_entries()])
@@ -132,6 +151,13 @@ def analyze(
 	#Start children
 	print 'Processing {0} entries with {1} processes'.format(entries,num_processes)
 
+    args = []
+
+    for i,(k,g) in enumerate(itertools.groupby(sys.argv,lambda x:x=='-')):
+        if not i: continue
+        g=list(g)
+        args += g[:]
+
 	watchers = []
 	for process_number in range(num_processes):
 		if num_processes>1: suffix = '_{0:0>{1}}'.format(process_number,int(log(num_processes-1,10))+1)
@@ -142,7 +168,7 @@ def analyze(
 		error = 'error{0}.out'.format(suffix)
 		logger = 'logger{0}.out'.format(suffix)
 
-		child_call = 'analyze_singlet.py -a {analysis_name} -m {module_name} -n {tree} -s {start} -e {end} -t {files_text} -o {output} -z {error} -l {logger}{keep}{grl}'.format(
+		child_call = 'analyze_singlet.py -a {analysis_name} -m {module_name} -n {tree} -s {start} -e {end} -t {files_text} -o {output} -z {error} -l {logger}{keep}{grl} {args}'.format(
 			analysis_name = analysis_name,
 			module_name = module_name,
 			tree = tree,
@@ -154,6 +180,7 @@ def analyze(
 			logger = logger,
 			keep = ' --keep' if keep else '',
 			grl = ' -g {0}'.format(' '.join(grl)) if grl else '',
+            args = ' '.join(args),
 			)
 		watchers.append(watcher(output,error,logger,subprocess.Popen(child_call.split()),'Process {0}: '.format(process_number)))
 
@@ -216,6 +243,7 @@ if __name__ == '__main__':
 	if not files:
 		print 'No input found, exiting'
 		sys.exit(1)
+        #exit = True
 
 	analyze(
 		args.MODULE,
@@ -227,5 +255,6 @@ if __name__ == '__main__':
 		args.OUTPUT,
 		args.ENTRIES,
 		args.KEEP,
+        help,
 		)
 
