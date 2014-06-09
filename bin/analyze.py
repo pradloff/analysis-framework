@@ -234,9 +234,9 @@ if __name__ == '__main__':
         sys.exit(1)
         #exit = True
 
-    #print help
+    print help
 
-   # print 'analyzing'
+    #print 'analyzing'
 
     analyze(
         args.MODULE,
@@ -248,5 +248,5 @@ if __name__ == '__main__':
         args.OUTPUT,
         args.ENTRIES,
         args.KEEP,
-        help_,
+        help,
         )
