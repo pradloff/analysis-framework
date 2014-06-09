@@ -112,8 +112,10 @@ class function():
     __metaclass__ = function_meta
     def __init__(self): pass
     def __getattr__(self,attr):
-        if not self.__dict__['__set']: 
+        if not self.__dict__['__set']:
+            print self.__getattr__ 
             self.__getattr__ = types.MethodType(object.__getattribute__,self,function)
+            print self.__getattr__
             try: self.__deferred_init__(*self.__dict__['__args'],**self.__dict__['__kwargs'])
             except TypeError: raise InstantiationError(self.__class__,self.__dict__['__args'],self.__dict__['__kwargs'])
             self.__dict__['__set'] = True
