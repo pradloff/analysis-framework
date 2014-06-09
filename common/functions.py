@@ -1,6 +1,14 @@
 import ROOT
 from copy import copy
 import inspect
+import argparse
+import sys
+
+class parser(argparse.ArgumentParser):
+    def error(self,message):
+        sys.stderr.write('error: {0}\n'.format(message))
+        self.print_help()
+        sys.exit(2)
 
 class InstantiationError(TypeError):
 
