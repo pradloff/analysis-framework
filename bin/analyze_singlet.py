@@ -41,6 +41,7 @@ if __name__=='__main__':
         args.LOGGER,
         args.KEEP,
         )
+
     atexit.register(singlet.cleanup)
     singlet.initialize()
     singlet.run()

@@ -54,7 +54,6 @@ def __init__(self,*args,**kwargs):
 
     cla={}
 
-
     if argspec.defaults is not None:
         arg_names = argspec.args[-len(argspec.defaults):]
         arg_values = argspec.defaults
