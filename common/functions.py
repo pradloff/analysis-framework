@@ -4,6 +4,7 @@ import inspect
 import argparse
 import sys
 import textwrap
+import itertools
 
 class parser(argparse.ArgumentParser):
     def error(self,message):
