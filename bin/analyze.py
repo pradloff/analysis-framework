@@ -25,6 +25,15 @@ if __name__ == '__main__':
         args += g[1:]
         break
 
+    help = False
+
+    for h in ['-h','--help']:
+        try: 
+            args.remove(h)
+            help=True
+        except ValueError:
+            pass
+
     args = parser.parse_args(args)
     #print args
 
@@ -225,9 +234,9 @@ if __name__ == '__main__':
         sys.exit(1)
         #exit = True
 
-    print help
+    #print help
 
-    print 'analyzing'
+   # print 'analyzing'
 
     analyze(
         args.MODULE,
@@ -239,5 +248,5 @@ if __name__ == '__main__':
         args.OUTPUT,
         args.ENTRIES,
         args.KEEP,
-        help,
+        help_,
         )
