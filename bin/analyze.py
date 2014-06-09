@@ -26,6 +26,7 @@ if __name__ == '__main__':
         break
 
     args = parser.parse_args(args)
+    print args
 
 import os
 import sys
