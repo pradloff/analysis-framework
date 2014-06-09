@@ -3,6 +3,7 @@ from copy import copy
 import inspect
 import argparse
 import sys
+import textwrap
 
 class parser(argparse.ArgumentParser):
     def error(self,message):
