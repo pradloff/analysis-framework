@@ -26,7 +26,6 @@ if __name__=='__main__':
         break
 
     args = parser.parse_args(args)
-
     from common.analysis import analyze_slice
 
     singlet = analyze_slice(

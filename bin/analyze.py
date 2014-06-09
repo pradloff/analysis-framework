@@ -19,23 +19,7 @@ if __name__ == '__main__':
     parser.add_argument('-p','--processes',default=1,dest='PROCESSES',type=int,help='Number of processes to use.')
     parser.add_argument('--keep',default=False,dest='KEEP',action='store_true',help='Keep all branches, default False')
 
-    help = False
-
-    args = []
-    for i,(k,g) in enumerate(itertools.groupby(sys.argv,lambda x:x=='-')):
-        g=list(g)
-        args += g[1:]
-        break
-
-    for h in ['-h','--help']:
-        try: 
-            args.remove(h)
-            help=True
-        except ValueError:
-            pass
-    
-    args = parser.parse_args(args)
-    if help: parser.print_help()
+	args = parser.parse_args()
 
 import os
 import sys
@@ -120,20 +104,6 @@ def analyze(
     analysis_instance.setup_chain()
 
     print 'Analysis validated'
-
-    while True:
-        directory = '/tmp/'+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
-        try: os.mkdir(directory)
-        except OSError as error:
-            if error.errno != 17: raise
-            continue
-        break
-    print 'Created temporary directory {0}'.format(directory)
-
-    cwd = os.getcwd()
-    atexit.register(os.chdir,cwd)
-    atexit.register(shutil.rmtree,os.path.abspath(directory))
-    os.chdir(directory)
 
     if entries is not None:
         entries = min([int(entries),analysis_instance.pchain.get_entries()])
@@ -257,4 +227,3 @@ if __name__ == '__main__':
         args.KEEP,
         help,
         )
-

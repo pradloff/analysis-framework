@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 def call_grid(
+<<<<<<< HEAD
     module_name,
     analysis_name,
     grid_jsons,
@@ -50,7 +51,12 @@ def call_grid(
     atexit.register(shutil.rmtree,os.path.abspath(directory))
     os.chdir(directory)
 
+	analysis_home = os.getenv('ANALYSISHOME')
+	analysis_framework = os.getenv('ANALYSISFRAMEWORK')
 
+	analysis_constructor = __import__(module_name,globals(),locals(),[analysis_name]).__dict__[analysis_name]
+
+	analysis_instance = analysis_constructor()
 
     #create tarball of working directory
     print 'Creating tarball'
@@ -108,7 +114,6 @@ def call_grid(
             with open('input_datasets.txt','w') as f:
                 for input_dataset in input_datasets:
                     f.write(input_dataset+'\n')
-
 
             final_prun_command = prun_command.format(
                 grid_command=grid_command,
@@ -168,4 +173,3 @@ if __name__ == '__main__':
         jobsize=args.JOBSIZE,
         help,       
         )
-    
