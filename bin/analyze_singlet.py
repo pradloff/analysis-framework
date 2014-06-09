@@ -19,13 +19,7 @@ if __name__=='__main__':
 	parser.add_argument('-g','--grl',default=[],dest='GRL',nargs='+',help='Good run list(s) XML file to use.')
 	parser.add_argument('--keep',default=False,dest='KEEP',action='store_true',help='Keep all branches, default False')
 
-    args = []
-    for i,(k,g) in enumerate(itertools.groupby(sys.argv,lambda x:x=='-')):
-        g=list(g)
-        args += g[1:]
-        break
-
-	args = parser.parse_args(args)
+	args = parser.parse_args()
 
 	from common.analysis import analyze_slice
 
