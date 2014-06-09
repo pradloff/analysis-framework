@@ -26,7 +26,7 @@ if __name__ == '__main__':
         break
 
     args = parser.parse_args(args)
-    print args
+    #print args
 
 import os
 import sys
@@ -224,6 +224,8 @@ if __name__ == '__main__':
         print 'No input found, exiting'
         sys.exit(1)
         #exit = True
+
+    print 'analyzing'
 
     analyze(
         args.MODULE,
