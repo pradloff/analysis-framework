@@ -120,13 +120,8 @@ class analyze_slice():
 		self.analysis_instance.add_standard_functions()
 		self.analysis_instance.setup_chain()
 		self.analysis_instance.add_result_function(skim(self.analysis_instance))
-
-		#tie results to output file
-		for result_function in self.analysis_instance.result_functions:
-			print result_function.results		
 		
 		for result_function in self.analysis_instance.result_functions:
-			#print result_function
 			for result in result_function.results.values():
 				try: result.SetDirectory(self.output)
 				except AttributeError: pass
