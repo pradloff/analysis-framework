@@ -40,7 +40,9 @@ class arg():
 
 def __init__(self,*args,**kwargs):
     #self.__dict__['__set'] = False
-
+    super(event_function, self).__init__()
+    #print '__init__'
+    #event_function.__init__(self)
     self.__args = args
     self.__kwargs = kwargs
 
@@ -50,6 +52,8 @@ def __init__(self,*args,**kwargs):
         formatter_class=argparse.RawTextHelpFormatter,
         epilog=textwrap.dedent('\n\r-----------'),
         )
+
+    #argspec = inspect.getargspec(super(self.__class__, self).__deferred_init__)
 
     argspec = inspect.getargspec(self.__deferred_init__)
 
@@ -100,25 +104,34 @@ def __init__(self,*args,**kwargs):
     else:
         for kw,value in dyn_parser.parse_args(args).__dict__.items():
             self.__dict__['__kwargs'][kw] = value
-    
+
+#from common.meta import function
+from common.base import base
+
 class function_meta(type):
     def __init__(cls, name, bases, dct):
-        if bases:
+        if base not in bases:
             cls.__deferred_init__=cls.__init__
             cls.__init__=__init__
+            #print dct
         super(function_meta,cls).__init__(name, bases, dct)
 
-class function():
+class function(base):
     __metaclass__ = function_meta
     def __init__(self): pass
     def __getattribute__(self,attr):
-        setattr(function, '__getattribute__', types.MethodType(object.__getattribute__,self))
-        try: self.__deferred_init__(*self.__dict__['__args'],**self.__dict__['__kwargs'])
-        #try: super(function, self).__deferred_init__(*self.__dict__['__args'],**self.__dict__['__kwargs'])
-        except TypeError: raise InstantiationError(self.__class__,self.__dict__['__args'],self.__dict__['__kwargs'])
-        return super(example, self).__getattribute__(attr)
+        if attr not in [
+            '__deferred_init__',
+            '__class__',
+            ]:
+            #print attr
+            setattr(function, '__getattribute__', types.MethodType(object.__getattribute__,self))
+            try: self.__deferred_init__(*self.__dict__['__args'],**self.__dict__['__kwargs'])
+            #try: super(function, self).__deferred_init__(*self.__dict__['__args'],**self.__dict__['__kwargs'])
+            except TypeError: raise InstantiationError(self.__class__,self.__dict__['__args'],self.__dict__['__kwargs'])
+        return super(function, self).__getattribute__(attr)
 
-class event_function(function):
+class event_function(function,base):
     def __init__(self):
         self.required_branches = []
         self.keep_branches = []
@@ -127,14 +140,14 @@ class event_function(function):
     def __call__(self,event):
         return
 
-class result_function(function):
+class result_function(function,base):
     def __init__(self):
         self.results = {}
     
     def __call__(self,event):
         return
 
-class meta_result_function(function):
+class meta_result_function(function,base):
     def __init__(self):
         self.results = {}
 
