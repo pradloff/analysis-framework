@@ -123,6 +123,7 @@ class analyze_slice():
 
 		#tie results to output file
 		for result_function in self.analysis_instance.result_functions:
+			print result_function
 			for result in result_function.results.values():
 				try: result.SetDirectory(self.output)
 				except AttributeError: pass
