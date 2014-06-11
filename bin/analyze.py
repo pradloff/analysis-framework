@@ -103,9 +103,6 @@ def analyze(
             if self.error_file: self.error_file.close()
             if self.logger_file: self.logger_file.close()
 
-
-    cwd = os.getcwd()
-
     full_output = os.path.abspath(output)
 
     analysis_constructor = __import__(module_name,globals(),locals(),[analysis_name]).__dict__[analysis_name]
@@ -123,6 +120,20 @@ def analyze(
     analysis_instance.setup_chain()
 
     print 'Analysis validated'
+
+    while True:
+        directory = '/tmp/'+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
+        try: os.mkdir(directory)
+        except OSError as error:
+            if error.errno != 17: raise
+            continue
+        break
+    print 'Created temporary directory {0}'.format(directory)
+  
+    cwd = os.getcwd()
+    atexit.register(os.chdir,cwd)
+    atexit.register(shutil.rmtree,os.path.abspath(directory))
+    os.chdir(directory)
 
     if entries is not None:
         entries = min([int(entries),analysis_instance.pchain.get_entries()])
