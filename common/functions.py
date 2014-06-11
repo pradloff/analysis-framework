@@ -113,7 +113,7 @@ class function():
     def __init__(self): pass
     def __getattribute__(self,attr):
         setattr(function, '__getattribute__', types.MethodType(object.__getattribute__,self))
-        self.__deferred_init__(*self.__dict__['__args'],**self.__dict__['__kwargs'])
+        try: self.__deferred_init__(*self.__dict__['__args'],**self.__dict__['__kwargs'])
         #try: super(function, self).__deferred_init__(*self.__dict__['__args'],**self.__dict__['__kwargs'])
         except TypeError: raise InstantiationError(self.__class__,self.__dict__['__args'],self.__dict__['__kwargs'])
         return super(example, self).__getattribute__(attr)
