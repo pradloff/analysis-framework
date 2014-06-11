@@ -41,8 +41,8 @@ class arg():
 def __init__(self,*args,**kwargs):
     #self.__dict__['__set'] = False
 
-    self.__dict__['__args'] = args
-    self.__dict__['__kwargs'] = kwargs
+    self.__args = args
+    self.__kwargs = kwargs
 
     #print '__init__ default'
     dyn_parser = parser(
