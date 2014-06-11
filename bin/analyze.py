@@ -103,6 +103,9 @@ def analyze(
             if self.error_file: self.error_file.close()
             if self.logger_file: self.logger_file.close()
 
+
+    cwd = os.getcwd()
+
     full_output = os.path.abspath(output)
 
     analysis_constructor = __import__(module_name,globals(),locals(),[analysis_name]).__dict__[analysis_name]
