@@ -40,7 +40,7 @@ class arg():
 
 def __init__(self,*args,**kwargs):
     #self.__dict__['__set'] = False
-    super(event_function, self).__init__()
+    #super(event_function, self).__init__()
     #print '__init__'
     #event_function.__init__(self)
     self.__args = args
