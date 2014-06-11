@@ -5,6 +5,7 @@ if __name__=='__main__':
     import sys
     import argparse
     import atexit
+    import itertools
 
     parser = argparse.ArgumentParser(prog='analyze_singlet.py',description='Useful caller for analyses with single process.')
     parser.add_argument('-t','--textinput',dest='TEXTINPUT',required=True,help='Text file containing input file(s) to analyze.  Separate files by line.')
