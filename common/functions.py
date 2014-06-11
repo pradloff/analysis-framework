@@ -39,7 +39,7 @@ class arg():
         return self.value
 
 def __init__(self,*args,**kwargs):
-    self.__dict__['__set'] = False
+    #self.__dict__['__set'] = False
 
     self.__dict__['__args'] = args
     self.__dict__['__kwargs'] = kwargs
@@ -113,7 +113,8 @@ class function():
     def __init__(self): pass
     def __getattribute__(self,attr):
         setattr(function, '__getattribute__', types.MethodType(object.__getattribute__,self))
-        try: super(function, self).__deferred_init__(*self.__dict__['__args'],**self.__dict__['__kwargs'])
+        self.__deferred_init__(*self.__dict__['__args'],**self.__dict__['__kwargs'])
+        #try: super(function, self).__deferred_init__(*self.__dict__['__args'],**self.__dict__['__kwargs'])
         except TypeError: raise InstantiationError(self.__class__,self.__dict__['__args'],self.__dict__['__kwargs'])
         return super(example, self).__getattribute__(attr)
 
