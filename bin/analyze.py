@@ -119,8 +119,7 @@ def analyze(
     analysis_instance = analysis_constructor()
     if help: sys.exit(2)
 
-    generate_dictionaries()
-
+    dictionary_location = generate_dictionaries()
     print 'Validating analysis'
 
     analysis_instance.tree = tree
@@ -138,7 +137,8 @@ def analyze(
             continue
         break
     print 'Created temporary directory {0}'.format(directory)
-  
+    
+    os.symlink(dictionary_location, directory+'/dictionaries')
     cwd = os.getcwd()
     atexit.register(os.chdir,cwd)
     atexit.register(shutil.rmtree,os.path.abspath(directory))

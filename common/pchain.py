@@ -20,6 +20,7 @@ def generate_dictionaries():
 		('vector<TLorentzVector>','vector;TLorentzVector.h'),
 		]: ROOT.gInterpreter.GenerateDictionary(name,base)
 	os.chdir(cwd)
+	return cwd+'/dictionaries'
 
 """
 def generate_dictionaries():
