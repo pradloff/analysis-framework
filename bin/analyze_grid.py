@@ -22,6 +22,7 @@ def call_grid(
     from common.external import call
     import tarfile
     import json
+    import itertools
 
     #parse all first because we change directory and finds json problems
     grid_datas = []
