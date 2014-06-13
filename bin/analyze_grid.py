@@ -14,6 +14,7 @@ def call_grid(
     ):
 
     import os
+    import sys
     import atexit
     import shutil
     from time import sleep, time
@@ -125,6 +126,8 @@ if __name__ == '__main__':
 
     import argparse
     import itertools
+    import sys
+
     parser = argparse.ArgumentParser(prog='analyze_grid.py',description='Useful grid caller for analyses.')
     parser.add_argument('-m','--module',default=None,dest='MODULE',required=True,help='Module containing analysis class.')
     parser.add_argument('-a','--analysis',default=None,dest='ANALYSIS',required=True,help='Name of analysis to use.')
