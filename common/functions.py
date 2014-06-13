@@ -60,7 +60,7 @@ def __init__(self,*args,**kwargs):
     arg_dict = {}
 
     if argspec.defaults is not None:
-        for arg_name,arg_value in [(_arg_name,_arg_value) for _arg_name,_arg_value in zip(argspec.args[-len(argspec.defaults):],argspec.defaults) if isinstance(arg_value,arg)]:
+        for arg_name,arg_value in [(_arg_name,_arg_value) for _arg_name,_arg_value in zip(argspec.args[-len(argspec.defaults):],argspec.defaults) if isinstance(_arg_value,arg)]:
             arg_dict[arg_name] = arg_value
 
     #only need to do command-line stuff if the function has an expectation of options
