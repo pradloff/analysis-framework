@@ -191,9 +191,6 @@ def analyze(
             grl = ' -g {0}'.format(' '.join(grl)) if grl else '',
             args = ' '.join(args),
             )
-
-        print child_call
-        print args
         
         watchers.append(watcher(output,error,logger,subprocess.Popen(child_call.split()),'Process {0}: '.format(process_number)))
 
