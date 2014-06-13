@@ -5,11 +5,16 @@ if __name__ == '__main__':
     print 'starting'
 
     import sys
-    import argparse
+    from common.functions import parser
     import os
     import itertools
 
-    parser = argparse.ArgumentParser(prog='analyze.py',description='Useful caller for analyses.')
+    #parser = argparse.ArgumentParser(prog='analyze.py',description='Useful caller for analyses.')
+    parser = parser(
+        prog=self.__class__.__name__,
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog=textwrap.dedent('\n\r-----------'),
+        )
     parser.add_argument('-i','--input',default=[],dest='INPUT', nargs='+',help='Input file(s) to analyze.')
     parser.add_argument('-t','--textinput',default=None,dest='TEXTINPUT',help='Text file containing input file(s) to analyze.  Separate files by line.')
     parser.add_argument('-m','--module',dest='MODULE',required=True,help='Module containing analysis class.')
@@ -35,6 +40,8 @@ if __name__ == '__main__':
             help=True
         except ValueError:
             pass
+
+    if help: parser.print_help()
 
     args = parser.parse_args(args)
     #print args
