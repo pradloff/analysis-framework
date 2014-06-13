@@ -55,11 +55,7 @@ class analysis():
 
 import os
 import sys
-#hurdle root bullshit
-argv = sys.argv[:]
-sys.argv = []
 import ROOT
-sys.argv = argv
 from common.pchain import generate_dictionaries
 from time import time
 from common.event import event_object

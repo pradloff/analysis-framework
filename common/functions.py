@@ -57,53 +57,52 @@ def __init__(self,*args,**kwargs):
 
     argspec = inspect.getargspec(self.__deferred_init__)
 
-    cla={}
+    arg_dict = {}
 
     if argspec.defaults is not None:
-        arg_names = argspec.args[-len(argspec.defaults):]
-        arg_values = argspec.defaults
+        for arg_name,arg_value in [(_arg_name,_arg_value) for _arg_name,_arg_value in zip(argspec.args[-len(argspec.defaults):],argspec.defaults) if isinstance(arg_value,arg)]:
+            arg_dict[arg_name] = arg_value
 
-    else:
-        arg_names = []
-        arg_values = []
-
-    for arg_name,arg_value in zip(arg_names,arg_values):
-
-        if not isinstance(arg_value,arg): continue
-
-        if arg_name in kwargs: arg_value.value = kwargs[arg_name]
-
-        cla[arg_name]=arg_value
-        dyn_parser.add_argument(
-            '--'+arg_name,
-            required=arg_value.required,
-            default=arg_value.value,
-            dest=arg_name,
-            help=arg_value.help,
-            type=arg_value.type,
-            )
-
-    args = []
-    help = False
-    for i,(k,g) in enumerate(itertools.groupby(sys.argv,lambda x:x=='-')):
-        g=list(g)
-
-        if all([
-            not i,
-            any([
-                '-h' in g,
-                '--help' in g
-                ]),
-            ]): help = True
-        if k: continue
-
-        if g[0]!=self.__class__.__name__: continue
-        args += g[1:]
+    #only need to do command-line stuff if the function has an expectation of options
+    if arg_dict:
+        cla={}
+    
+        for arg_name,arg_value in arg_dict.items():
         
-    if help: dyn_parser.print_help()
-    else:
-        for kw,value in dyn_parser.parse_args(args).__dict__.items():
-            self.__dict__['__kwargs'][kw] = value
+            if arg_name in kwargs: arg_value.value = kwargs[arg_name]
+
+            cla[arg_name]=arg_value
+            dyn_parser.add_argument(
+                '--'+arg_name,
+                required=arg_value.required,
+                default=arg_value.value,
+                dest=arg_name,
+                help=arg_value.help,
+                type=arg_value.type,
+                )
+
+        args = []
+        help = False
+        for i,(k,g) in enumerate(itertools.groupby(sys.argv,lambda x:x=='-')):
+            g=list(g)
+
+            if all([
+                not i,
+                any([
+                    '-h' in g,
+                    '--help' in g
+                    ]),
+                ]): help = True
+            if k: continue
+
+            if g[0]!=self.__class__.__name__: continue
+            args += g[1:]
+            
+            
+        if help: dyn_parser.print_help()
+        else:
+            for kw,value in dyn_parser.parse_args(args).__dict__.items():
+                self.__dict__['__kwargs'][kw] = value
 
 #from common.meta import function
 from common.base import base
