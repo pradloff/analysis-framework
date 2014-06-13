@@ -11,7 +11,6 @@ if __name__ == '__main__':
 
     #parser = argparse.ArgumentParser(prog='analyze.py',description='Useful caller for analyses.')
     parser = parser(
-        prog=self.__class__.__name__,
         formatter_class=argparse.RawTextHelpFormatter,
         epilog=textwrap.dedent('\n\r-----------'),
         )
