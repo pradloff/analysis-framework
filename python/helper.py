@@ -23,6 +23,7 @@ class root_quiet(object):
         re.compile("Error in <TStreamerInfo::BuildOld>:."),
         ]
     def __init__(self, filters = DefaultFilter):
+        print 'trying to shutup root'
         self._dummy = False # if dummy, we don't really shut-up ROOT...
         if os.environ.get('PYUTILS_SHUTUP_DEBUG', '0') == '1':
             self._dummy = True
