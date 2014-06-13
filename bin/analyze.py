@@ -226,19 +226,19 @@ def analyze(
     os.chdir(cwd)
     mkpath(os.path.dirname(full_output))
     
-    ROOT.gErrorIgnoreLevel = 3000
-    if num_processes>1:
-        merger = ROOT.TFileMerger()
-        if os.path.exists(full_output): os.remove(full_output)
-        merger.OutputFile(full_output)
-        for result in results:
-            merger.AddFile(directory+'/'+result)
-        merger.Merge()
-    else:
-        shutil.move(directory+'/'+results[0],full_output)
+    from helper import root_quiet
+    with root_quiet():
+        if num_processes>1:
+            merger = ROOT.TFileMerger()
+            if os.path.exists(full_output): os.remove(full_output)
+            merger.OutputFile(full_output)
+            for result in results:
+                merger.AddFile(directory+'/'+result)
+            merger.Merge()
+        else:
+            shutil.move(directory+'/'+results[0],full_output)
 
     print '{0} created'.format(full_output)
-    ROOT.gErrorIgnoreLevel = -1
 
 if __name__ == '__main__':
 
