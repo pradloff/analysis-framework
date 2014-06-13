@@ -2,8 +2,6 @@
 
 if __name__ == '__main__':
 
-    print 'starting'
-
     import sys
     from common.functions import parser
     import argparse
