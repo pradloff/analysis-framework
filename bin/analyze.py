@@ -227,7 +227,7 @@ def analyze(
     mkpath(os.path.dirname(full_output))
     
     from helper import root_quiet
-    with root_quiet():
+    with root_quiet(filters=["\[TFile::Cp\]"]):
         if num_processes>1:
             merger = ROOT.TFileMerger()
             if os.path.exists(full_output): os.remove(full_output)

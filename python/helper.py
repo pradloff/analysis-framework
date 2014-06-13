@@ -17,13 +17,11 @@ class root_quiet(object):
     A little helper class to keep ROOT silent...
     """
     DefaultFilter = [
-        re.compile("[TFile::Cp]"),
         re.compile("Warning in <TClass::TClass>: no dictionary for class."),
         re.compile("Warning in <TEnvRec::ChangeValue>: duplicate entry."),
         re.compile("Error in <TStreamerInfo::BuildOld>:."),
         ]
     def __init__(self, filters = DefaultFilter):
-        print 'trying to shutup root'
         self._dummy = False # if dummy, we don't really shut-up ROOT...
         if os.environ.get('PYUTILS_SHUTUP_DEBUG', '0') == '1':
             self._dummy = True
