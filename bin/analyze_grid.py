@@ -10,7 +10,7 @@ def call_grid(
     keep=False,
     merge=False,
     jobsize=1,
-    help,
+    help=False,
     ):
 
     import os
@@ -163,5 +163,5 @@ if __name__ == '__main__':
         keep=args.KEEP,
         merge=args.MERGE,
         jobsize=args.JOBSIZE,
-        help,       
+        help=help,       
         )
