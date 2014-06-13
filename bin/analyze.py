@@ -120,14 +120,11 @@ def analyze(
     if help: sys.exit(2)
 
     dictionary_location = generate_dictionaries()
-    print 'Validating analysis'
 
     analysis_instance.tree = tree
     analysis_instance.grl = grl
     analysis_instance.add_file(*files)
     analysis_instance.setup_chain()
-
-    print 'Analysis validated'
 
     while True:
         directory = '/tmp/'+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
@@ -198,6 +195,9 @@ def analyze(
     results = []
     exitcodes = []
     finished = [False for i in range(num_processes)]
+    
+    if Key
+    
     while True:
         try:
             sleep(1)
@@ -216,7 +216,8 @@ def analyze(
         except KeyboardInterrupt:
             for watcher in watchers:
                 watcher.kill()
-            break
+            raise
+            #break
 
     if any(exitcodes) or not all(finished):
         print 'Abnormal exit in at least one process, terminating'
@@ -235,6 +236,8 @@ def analyze(
         merger.Merge()
     else:
         shutil.move(directory+'/'+results[0],full_output)
+
+    print '{0} created'.format(full_output)
 
 if __name__ == '__main__':
 
