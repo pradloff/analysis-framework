@@ -2,6 +2,8 @@
 
 if __name__ == '__main__':
 
+    print 'starting'
+
     import sys
     import argparse
     import os
@@ -39,11 +41,13 @@ if __name__ == '__main__':
 
 import os
 import sys
+print 'ABOUT TO IMPORT ROOT... OH FUCK'
 #hurdle root bullshit
 argv = sys.argv[:]
 sys.argv = []
 import ROOT
 sys.argv = argv
+print 'DID IT FUCKING WORK?'
 from common.pchain import generate_dictionaries
 import shutil
 from time import sleep, time
