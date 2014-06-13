@@ -39,7 +39,11 @@ if __name__ == '__main__':
 
 import os
 import sys
+#hurdle root bullshit
+argv = sys.argv[:]
+sys.argv = []
 import ROOT
+sys.argv = argv
 from common.pchain import generate_dictionaries
 import shutil
 from time import sleep, time
@@ -184,7 +188,8 @@ def analyze(
             )
 
         print child_call
-
+        print args
+        
         watchers.append(watcher(output,error,logger,subprocess.Popen(child_call.split()),'Process {0}: '.format(process_number)))
 
     #Monitor
