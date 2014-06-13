@@ -142,23 +142,31 @@ class analyze_slice():
 		done = 0.
 		rate = 0.
 
+        #get these outside the loop so there is no complication inside the loop
+        event_function_info = [(event_function_.__call__,event_function_.__class__.__name__,event_function_.required_branches+event_function_.create_branches.keys()) for event_function_ in self.analysis_instance.event_functions]
+        result_function_calls = [result_function_.__call__ for result_function_ in self.analysis_instance.result_functions]
+        get_branches_ = self.analysis_instance.pchain.get_branches
 		for entry in xrange(self.start,self.end):
 			#Create new event object (basically just a namespace)
 			event = event_object()
 			event.__stop__ = 1
 			event.__entry__ = entry
 			self.analysis_instance.pchain.set_entry(entry)
-			for event_function in self.analysis_instance.event_functions:
+			for event_function_call,event_function_name,event_function_branches in event_function_info:
 				#Get registered branches from chain
-				self.analysis_instance.pchain.get_branches(event,event_function.required_branches+event_function.create_branches.keys(),event_function.__class__.__name__)
+				get_branches(
+				    event,
+				    event_function_branches,
+				    event_function_name
+				    )
 				#Call event function
-				event_function(event)
+				event_function_call(event)
 				if event.__break__: break
 				#Increment stop count (used in cutflow)
 				event.__stop__+= 1
-			for result_function in self.analysis_instance.result_functions:
+			for result_function_call in result_function_calls:
 				#Call result function (does not necessarily respect event.__break__, must be implemented on case by case basis in __call__ of result function)
-				result_function(event)
+				result_function_call(event)
 
 			rate = (entry-self.start)/(time()-time_start)
 			done = float(entry-self.start+1)/(self.end-self.start)*100.
