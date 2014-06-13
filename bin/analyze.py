@@ -196,8 +196,6 @@ def analyze(
     exitcodes = []
     finished = [False for i in range(num_processes)]
     
-    if Key
-    
     while True:
         try:
             sleep(1)
