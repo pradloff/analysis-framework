@@ -129,8 +129,8 @@ class function(base):
             #print attr
             setattr(self.__class__, '__getattribute__', types.MethodType(object.__getattribute__,self))
             print self
-            print self.__args
-            print self.__kwargs
+            #print self.__args
+            #print self.__kwargs
             try: self.__deferred_init__(*self.__dict__['__args'],**self.__dict__['__kwargs'])
             #try: super(function, self).__deferred_init__(*self.__dict__['__args'],**self.__dict__['__kwargs'])
             except TypeError: raise InstantiationError(self.__class__,self.__dict__['__args'],self.__dict__['__kwargs'])
