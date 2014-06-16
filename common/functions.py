@@ -97,15 +97,18 @@ def __init__(self,*args,**kwargs):
 
             if g[0]!=self.__class__.__name__: continue
             args += g[1:]
-        print self
+
         for arg_name,arg_value in arg_dict.items():
         	self.__dict__['__kwargs'][arg_name] = arg_value.value
-        print self.__dict__['__kwargs']
+
         if help: dyn_parser.print_help()
 
         else:
             for kw,value in dyn_parser.parse_args(args).__dict__.items():
                 self.__dict__['__kwargs'][kw] = value
+
+        print self
+        print self.__dict__['__kwargs']
 
 #from common.meta import function
 from common.base import base
@@ -129,6 +132,7 @@ class function(base):
             #print attr
             setattr(self.__class__, '__getattribute__', types.MethodType(object.__getattribute__,self))
             print self
+            print self.__dict__['__kwargs']
             #print self.__args
             #print self.__kwargs
             try: self.__deferred_init__(*self.__dict__['__args'],**self.__dict__['__kwargs'])
