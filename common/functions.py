@@ -100,7 +100,7 @@ def __init__(self,*args,**kwargs):
             
         for arg_name,arg_value in arg_dict.items():
         	self.__dict__['__kwargs'][arg_name] = arg_value.value
-            
+        print self.__dict__['__kwargs']
         if help: dyn_parser.print_help()
 
         else:
