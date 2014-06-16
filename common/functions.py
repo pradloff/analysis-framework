@@ -98,8 +98,11 @@ def __init__(self,*args,**kwargs):
             if g[0]!=self.__class__.__name__: continue
             args += g[1:]
             
+        for arg_name,arg_value in arg_dict.items():
+        	self.__dict__['__kwargs'][arg_name] = arg_value.value
             
         if help: dyn_parser.print_help()
+
         else:
             for kw,value in dyn_parser.parse_args(args).__dict__.items():
                 self.__dict__['__kwargs'][kw] = value
