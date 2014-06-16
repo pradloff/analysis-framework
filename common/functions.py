@@ -126,6 +126,7 @@ class function(base):
     def __init__(self): pass
     def __getattribute__(self,attr):
         if attr not in [
+        	'__dict__',
             '__deferred_init__',
             '__class__',
             ]:
