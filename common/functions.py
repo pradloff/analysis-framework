@@ -107,7 +107,7 @@ def __init__(self,*args,**kwargs):
             for kw,value in dyn_parser.parse_args(args).__dict__.items():
                 self.__dict__['__kwargs'][kw] = value
 
-        print self
+        print '__init__',self
         print self.__dict__['__kwargs']
 
 #from common.meta import function
@@ -129,9 +129,9 @@ class function(base):
             '__deferred_init__',
             '__class__',
             ]:
-            #print attr
+            print attr
             setattr(self.__class__, '__getattribute__', types.MethodType(object.__getattribute__,self))
-            print self
+            print 'function',self
             print self.__dict__['__kwargs']
             #print self.__args
             #print self.__kwargs
