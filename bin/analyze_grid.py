@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 def call_grid(
-<<<<<<< HEAD
     module_name,
     analysis_name,
     grid_jsons,
@@ -11,10 +10,11 @@ def call_grid(
     keep=False,
     merge=False,
     jobsize=1,
-    help,
+    help=False,
     ):
 
     import os
+    import sys
     import atexit
     import shutil
     from time import sleep, time
@@ -23,6 +23,7 @@ def call_grid(
     from common.external import call
     import tarfile
     import json
+    import itertools
 
     #parse all first because we change directory and finds json problems
     grid_datas = []
@@ -50,13 +51,6 @@ def call_grid(
     atexit.register(os.chdir,cwd)
     atexit.register(shutil.rmtree,os.path.abspath(directory))
     os.chdir(directory)
-
-	analysis_home = os.getenv('ANALYSISHOME')
-	analysis_framework = os.getenv('ANALYSISFRAMEWORK')
-
-	analysis_constructor = __import__(module_name,globals(),locals(),[analysis_name]).__dict__[analysis_name]
-
-	analysis_instance = analysis_constructor()
 
     #create tarball of working directory
     print 'Creating tarball'
@@ -131,6 +125,8 @@ def call_grid(
 if __name__ == '__main__':
 
     import argparse
+    import itertools
+    import sys
 
     parser = argparse.ArgumentParser(prog='analyze_grid.py',description='Useful grid caller for analyses.')
     parser.add_argument('-m','--module',default=None,dest='MODULE',required=True,help='Module containing analysis class.')
@@ -171,5 +167,5 @@ if __name__ == '__main__':
         keep=args.KEEP,
         merge=args.MERGE,
         jobsize=args.JOBSIZE,
-        help,       
+        help=help,       
         )
