@@ -92,10 +92,10 @@ class analyze_slice():
         self.output = None
         self.exitcode = 1
 
-		if error_file_name: self.error_file = open(error_file_name,'w+',0)
-		else: self.error_file = None
+        if error_file_name: self.error_file = open(error_file_name,'w+',0)
+        else: self.error_file = None
         if logger_file_name: self.logger_file = open(logger_file_name,'w+',0)
-		else: self.logger_file = None
+        else: self.logger_file = None
 		
     def initialize(self):
 
