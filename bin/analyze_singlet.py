@@ -19,6 +19,7 @@ if __name__=='__main__':
     parser.add_argument('-n','--tree',dest='TREE',required=True,help='TTree name which contains event information.')
     parser.add_argument('-g','--grl',default=[],dest='GRL',nargs='+',help='Good run list(s) XML file to use.')
     parser.add_argument('--keep',default=False,dest='KEEP',action='store_true',help='Keep all branches, default False')
+    parser.add_argument('--interactive',default=False,dest='INTERACT',action='store_true',help='Interact with event')
 
     args = []
     for i,(k,g) in enumerate(itertools.groupby(sys.argv,lambda x:x=='-')):
@@ -45,4 +46,4 @@ if __name__=='__main__':
 
     atexit.register(singlet.cleanup)
     singlet.initialize()
-    singlet.run()
+    singlet.run(interactive=args.INTERACT)
