@@ -135,8 +135,8 @@ class analyze_slice():
                 try: result.SetDirectory(self.output)
                 except AttributeError: pass
 
-        self.error_file.flush()
-        self.logger_file.flush()
+        if self.error_file: self.error_file.flush()
+        if self.logger_file: self.logger_file.flush()
 
     def run(self,interactive=False):
 
