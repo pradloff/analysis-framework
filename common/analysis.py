@@ -169,7 +169,7 @@ class analyze_slice():
             for result_function_call in result_function_calls:
                 #Call result function (does not necessarily respect event.__break__, must be implemented on case by case basis in __call__ of result function)
                 result_function_call(event)
-			if interactive: code.interact(locals={'event':event})
+            if interactive: code.interact(locals={'event':event})
             rate = (entry-self.start)/(time()-time_start)
             done = float(entry-self.start+1)/(self.end-self.start)*100.
     
