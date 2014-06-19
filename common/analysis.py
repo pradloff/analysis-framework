@@ -92,16 +92,19 @@ class analyze_slice():
         self.output = None
         self.exitcode = 1
 
-        self.error_file = open(error_file_name,'w+',0)
-        self.logger_file = open(logger_file_name,'w+',0)
-
+		if error_file_name: self.error_file = open(error_file_name,'w+',0)
+		else: self.error_file = None
+        if logger_file_name: self.logger_file = open(logger_file_name,'w+',0)
+		else: self.logger_file = None
+		
     def initialize(self):
 
-        sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
-        sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
-
-        os.dup2(self.logger_file.fileno(),sys.stdout.fileno())
-        os.dup2(self.error_file.fileno(),sys.stderr.fileno())
+        if self.logger_file:
+            sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+            os.dup2(self.logger_file.fileno(),sys.stdout.fileno())
+        if self.error_file:
+            sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
+            os.dup2(self.error_file.fileno(),sys.stderr.fileno())
 
         analysis_constructor = __import__(self.module_name,globals(),locals(),[self.analysis_name]).__dict__[self.analysis_name]
 
@@ -204,8 +207,10 @@ class analyze_slice():
 
     def cleanup(self):
         if self.output: self.output.Close()
-        self.logger_file.flush()
-        self.logger_file.close()
-        self.error_file.flush()
-        self.error_file.close()
+        if self.logger_file:
+            self.logger_file.flush()
+            self.logger_file.close()
+        if self.error_file:
+            self.error_file.flush()
+            self.error_file.close()
         sys.exit(self.exitcode)
