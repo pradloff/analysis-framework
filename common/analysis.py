@@ -179,8 +179,8 @@ class analyze_slice():
             if done>milestone:
                 milestone+=10.
                 print '{0}% complete, {1} Hz'.format(round(done,2),round(rate,2))
-                self.error_file.flush()
-                self.logger_file.flush()
+                if self.error_file: self.error_file.flush()
+                if self.logger_file: self.logger_file.flush()
 
         #Handle results
 
