@@ -136,9 +136,10 @@ class function(base):
             #print self.__dict__['__kwargs']
             #print self.__args
             #print self.__kwargs
-            try: self.__deferred_init__(*self.__dict__['__args'],**self.__dict__['__kwargs'])
+            self.__deferred_init__(*self.__dict__['__args'],**self.__dict__['__kwargs'])
+            #try: self.__deferred_init__(*self.__dict__['__args'],**self.__dict__['__kwargs'])
             #try: super(function, self).__deferred_init__(*self.__dict__['__args'],**self.__dict__['__kwargs'])
-            except TypeError: raise InstantiationError(self.__class__,self.__dict__['__args'],self.__dict__['__kwargs'])
+            #except TypeError: raise InstantiationError(self.__class__,self.__dict__['__args'],self.__dict__['__kwargs'])
         return super(function, self).__getattribute__(attr)
 
 class event_function(function,base):
