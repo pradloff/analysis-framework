@@ -1,6 +1,6 @@
 from pchain import pchain
 from common.standard import in_grl, skim, cutflow, compute_mc_weight
-
+from common.functions import EventBreak
 class analysis():
 
     def __init__(self):
@@ -11,6 +11,7 @@ class analysis():
         self.required_branches = []
         self.create_branches = {}
         self.keep_branches = []
+	self.break_exceptions = []
 
         self.files = []
         self.tree = 'physics'
@@ -20,7 +21,9 @@ class analysis():
     
     def add_event_function(self,*event_functions):
         self.event_functions += event_functions
-
+	for event_function in event_functions:
+		self.break_exceptions += event_function.break_exceptions
+	
     def add_result_function(self,*result_functions):
         self.result_functions += result_functions
 
@@ -35,7 +38,7 @@ class analysis():
     def add_standard_functions(self):
         if self.grl: self.event_functions = [in_grl(self.grl)]+self.event_functions
         self.event_functions = [compute_mc_weight()]+self.event_functions
-        self.add_result_function(cutflow(self.event_functions))
+        self.add_result_function(cutflow(self.break_exceptions))
         
     def setup_chain(self):
         self.pchain = pchain(self.tree)
@@ -151,6 +154,8 @@ class analyze_slice():
         result_function_calls = [result_function_.__call__ for result_function_ in self.analysis_instance.result_functions]
         get_branches = self.analysis_instance.pchain.get_branches
         
+	break_exceptions = tuple(self.break_exceptions)
+
         for entry in xrange(self.start,self.end):
             #Create new event object (basically just a namespace)
             event = event_object()
@@ -165,10 +170,12 @@ class analyze_slice():
                     event_function_name
                     )
                 #Call event function
-                event_function_call(event)
-                if event.__break__: break
+                try: event_function_call(event)
+                except break_exceptions as e:
+			event.__break__ = e
+			break
                 #Increment stop count (used in cutflow)
-                event.__stop__+= 1
+                #event.__stop__+= 1
             for result_function_call in result_function_calls:
                 #Call result function (does not necessarily respect event.__break__, must be implemented on case by case basis in __call__ of result function)
                 result_function_call(event)

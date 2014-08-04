@@ -91,30 +91,36 @@ class in_grl(event_function):
 
 class cutflow(result_function):
 
-	def __init__(self,event_functions):
+	def __init__(self,break_exceptions):
 		result_function.__init__(self)
+
+		self.break_exceptions = dict((break_exception,i+1) for break_exception,i in enumerate(break_exceptions))
+		self.max = i+2
 
 		self.results['cutflow'] = ROOT.TH1F(
 			'cutflow',
 			'cutflow',
-			len(event_functions)+1,
+			len(self.break_exceptions)+1,
 			0,
-			len(event_functions)+1,
+			len(self.break_exceptions)+1,
 			)
 		self.results['cutflow_weighted'] = ROOT.TH1F(
 			'cutflow_weighted',
 			'cutflow_weighted',
-			len(event_functions)+1,
+			len(self.break_exceptions)+1,
 			0,
-			len(event_functions)+1,
+			len(self.break_exceptions)+1,
 			)
 
-		for i,event_function_name in enumerate(['input']+[event_function.__class__.__name__ for event_function in event_functions]):
-			self.results['cutflow'].GetXaxis().SetBinLabel(i+1,event_function_name)
-			self.results['cutflow_weighted'].GetXaxis().SetBinLabel(i+1,event_function_name)
-		
+		for i,break_exception_name in enumerate(['input']+[break_exception.__name__ for break_exception in self.break_exceptions]):
+			self.results['cutflow'].GetXaxis().SetBinLabel(i+1,break_exception_name)
+			self.results['cutflow_weighted'].GetXaxis().SetBinLabel(i+1,break_exception_name)
+
 	def __call__(self,event):
-		for i in range(event.__stop__):
+		if event.__break__.__class__ in self.break_exceptions: stop = self.break_exceptions[event.__break__.__class__]
+		elif event.__break__ is False: stop = self.max
+		else: raise RuntimeError('Invalid break exception: {0}'.format(event.__break__)
+		for i in range(stop):
 			self.results['cutflow'].Fill(i)
 			self.results['cutflow_weighted'].Fill(i,event.__weight__)
 

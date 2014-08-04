@@ -28,6 +28,9 @@ class InstantiationError(TypeError):
     def __str__(self):
         return 'InstantiationError: '+self.msg
 
+class EventBreak(Exception):
+    pass
+
 class arg():
     def __init__(self, default, required=False, help=''):
         self.value = default
@@ -146,6 +149,7 @@ class event_function(function,base):
     def __init__(self):
         self.required_branches = []
         self.keep_branches = []
+	self.break_exceptions = []
         self.create_branches = {}
     
     def __call__(self,event):
