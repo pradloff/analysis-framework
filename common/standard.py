@@ -94,8 +94,8 @@ class cutflow(result_function):
 	def __init__(self,break_exceptions):
 		result_function.__init__(self)
 
-		self.break_exceptions = dict((break_exception,i+1) for i,break_exception in enumerate(break_exceptions));
-		self.max = i+2
+		self.break_exceptions = dict((break_exception,i+1) for i,break_exception in enumerate(break_exceptions))
+		self.max = len(break_exceptions)+2
 
 		self.results['cutflow'] = ROOT.TH1F(
 			'cutflow',
