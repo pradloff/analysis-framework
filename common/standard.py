@@ -119,7 +119,7 @@ class cutflow(result_function):
 	def __call__(self,event):
 		if event.__break__.__class__ in self.break_exceptions: stop = self.break_exceptions[event.__break__.__class__]
 		elif event.__break__ is False: stop = self.max
-		else: raise RuntimeError('Invalid break exception: {0}'.format(event.__break__)
+		else: raise RuntimeError('Invalid break exception: {0}'.format(event.__break__))
 		for i in range(stop):
 			self.results['cutflow'].Fill(i)
 			self.results['cutflow_weighted'].Fill(i,event.__weight__)
