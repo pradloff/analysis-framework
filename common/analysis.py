@@ -154,7 +154,7 @@ class analyze_slice():
         result_function_calls = [result_function_.__call__ for result_function_ in self.analysis_instance.result_functions]
         get_branches = self.analysis_instance.pchain.get_branches
         
-	break_exceptions = tuple(self.break_exceptions)
+	break_exceptions = tuple(self.analysis_instance.break_exceptions)
 
         for entry in xrange(self.start,self.end):
             #Create new event object (basically just a namespace)
