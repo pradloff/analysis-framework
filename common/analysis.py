@@ -208,8 +208,8 @@ class analyze_slice():
         
         print '{0}% complete, {1} Hz'.format(round(done,2), round(rate,2))  
 
-        self.error_file.flush()
-        self.logger_file.flush()
+        if self.error_file: self.error_file.flush()
+        if self.logger_file: self.logger_file.flush()
         self.exitcode = 0
 
     def cleanup(self):
