@@ -112,9 +112,16 @@ class cutflow(result_function):
 			len(self.break_exceptions)+1,
 			)
 
-		for i,break_exception_name in enumerate(['input']+[break_exception.__name__ for break_exception in self.break_exceptions]):
+		self.results['cutflow'].GetXaxis().SetBinLabel(1,'input')
+		self.results['cutflow_weighted'].GetXaxis().SetBinLabel(1,'input')
+
+		for i,break_exception_name in self.break_exceptions.items():
 			self.results['cutflow'].GetXaxis().SetBinLabel(i+1,break_exception_name)
 			self.results['cutflow_weighted'].GetXaxis().SetBinLabel(i+1,break_exception_name)
+
+		#for i,break_exception_name in enumerate(['input']+[break_exception.__name__ for break_exception in self.break_exceptions]):
+		#	self.results['cutflow'].GetXaxis().SetBinLabel(i+1,break_exception_name)
+		#	self.results['cutflow_weighted'].GetXaxis().SetBinLabel(i+1,break_exception_name)
 
 	def __call__(self,event):
 		if event.__break__.__class__ in self.break_exceptions: stop = self.break_exceptions[event.__break__.__class__]
