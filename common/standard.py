@@ -115,9 +115,19 @@ class cutflow(result_function):
 		self.results['cutflow'].GetXaxis().SetBinLabel(1,'input')
 		self.results['cutflow_weighted'].GetXaxis().SetBinLabel(1,'input')
 
+		names = {}
+		for break_exception,i in sorted(self.break_exceptions.items(),key= lambda tup: tup[1]):
+			name = break_exception.__name__
+			if name not in names: names[name] = []
+			names[name].append(break_exception)
+			
+
 		for break_exception,i in self.break_exceptions.items():
-			self.results['cutflow'].GetXaxis().SetBinLabel(i+1,break_exception.__name__)
-			self.results['cutflow_weighted'].GetXaxis().SetBinLabel(i+1,break_exception.__name__)
+			name = break_exception.__name__
+			if len(names[name])>1:
+				name+='_{0}'.format(names[name].index(break_exception))
+			self.results['cutflow'].GetXaxis().SetBinLabel(i+1,name)
+			self.results['cutflow_weighted'].GetXaxis().SetBinLabel(i+1,name)
 
 		#for i,break_exception_name in enumerate(['input']+[break_exception.__name__ for break_exception in self.break_exceptions]):
 		#	self.results['cutflow'].GetXaxis().SetBinLabel(i+1,break_exception_name)
