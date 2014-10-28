@@ -154,7 +154,9 @@ def analyze(
 
     files_text = 'files.txt'
     with open(files_text,'w') as f:
-        for file_ in files: f.write(file_+'\n')
+        for file_ in files:
+            print file_
+            f.write(file_+'\n')
 
     #Start children
     print 'Processing {0} entries with {1} processes'.format(entries,num_processes)
@@ -174,10 +176,11 @@ def analyze(
         if num_processes>1: suffix = '{0:0>{1}}'.format(process_number,int(log(num_processes-1,10))+1)
         else: suffix = ''
         
-        directories.append(os.path.dirname(suffix+'/.'))
-        os.mkdir(suffix)
-    	os.symlink(dictionary_location, suffix+'/dictionaries')
-    	os.symlink(files_text, suffix+'/'+files_text)        
+        directory = os.path.dirname(suffix+'/.')
+        directories.append(directory)
+        os.mkdir(directory)
+    	os.symlink(dictionary_location, directory+'/dictionaries')
+    	os.symlink(cwd+'/'+files_text, directory+'/'+files_text)
         start,end = ranges[process_number]
         output = 'result.root'.format(suffix)
         error = 'error.out'.format(suffix)
