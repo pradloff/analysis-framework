@@ -86,12 +86,13 @@ class ROOT_output(output_base):
 
     def merge(self,directories):
         with root_quiet(filters=["\[TFile::Cp\]"]):
-                merger = ROOT.TFileMerger()
-                if os.path.exists(self.name): os.remove(self.name)
-                merger.OutputFile(self.name)
-                for directory in directories: merger.AddFile(directory+'/'+self.name)
-                merger.Merge()
-
+            merger = ROOT.TFileMerger()
+            if os.path.exists(self.name): os.remove(self.name)
+            merger.OutputFile(self.name)
+            for directory in directories: merger.AddFile(directory+'/'+self.name)
+            merger.Merge()
+        print '{0} created'.format(self.name)
+        
 class analyze_slice():
 
     def __init__(

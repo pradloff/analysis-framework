@@ -241,6 +241,7 @@ def analyze(
     os.chdir(os.path.dirname(full_output))
     
     for output in outputs:
+        print output.name
     	output.merge(directories)
     
     """
