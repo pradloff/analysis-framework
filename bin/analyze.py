@@ -177,7 +177,7 @@ def analyze(
         directories.append(os.path.dirname(suffix+'/.'))
         os.mkdir(suffix)
     	os.symlink(dictionary_location, suffix+'/dictionaries')
-        
+    	os.symlink(files_text, suffix+'/'+files_text)        
         start,end = ranges[process_number]
         output = 'result.root'.format(suffix)
         error = 'error.out'.format(suffix)
