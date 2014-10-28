@@ -32,8 +32,8 @@ if __name__=='__main__':
     args = parser.parse_args(args)
     from common.analysis import analyze_slice
 
-	if not os.path.exists(args.DIRECTORY): os.mkdir(args.DIRECTORY)
-	os.chdir(args.DIRECTORY)
+    if not os.path.exists(args.DIRECTORY): os.mkdir(args.DIRECTORY)
+    os.chdir(args.DIRECTORY)
 
     singlet = analyze_slice(
         args.MODULE,
