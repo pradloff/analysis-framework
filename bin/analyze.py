@@ -76,8 +76,8 @@ def analyze(
     class watcher():
         def __init__(self,directory,error,logger,child,prefix):
             self.directory = directory
-            self.error = error
-            self.logger = logger
+            self.error = '/'.join([directory,error])
+            self.logger = '/'.join([directory,logger])
             self.child = child
             self.prefix = prefix
 
