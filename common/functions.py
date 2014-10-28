@@ -7,14 +7,6 @@ import textwrap
 import itertools
 import types
 
-class output_base():
-    def __init__(self,name):
-        self.name = name
-    def merge(self,directories):
-        raise RuntimeError('merge undefined')
-    def close(self):
-        raise RuntimeError('close undefined')
-
 class parser(argparse.ArgumentParser):
     def error(self,message):
         sys.stderr.write('error: {0}\n'.format(message))
@@ -131,6 +123,14 @@ class function_meta(type):
             cls.__init__=__init__
             #print dct
         super(function_meta,cls).__init__(name, bases, dct)
+
+class output_base(base):
+    def __init__(self,name):
+        self.name = name
+    def merge(self,directories):
+        raise RuntimeError('merge undefined')
+    def close(self):
+        raise RuntimeError('close undefined')
 
 class function(base):
     __metaclass__ = function_meta
