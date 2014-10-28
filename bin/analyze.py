@@ -175,7 +175,7 @@ def analyze(
         else: suffix = ''
         
         directories.append(os.path.dirname(suffix+'/.'))
-        os.makedir(suffix)
+        os.mkdir(suffix)
     	os.symlink(dictionary_location, suffix+'/dictionaries')
         
         start,end = ranges[process_number]
