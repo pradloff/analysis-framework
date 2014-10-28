@@ -242,7 +242,10 @@ class analyze_slice():
 
     def cleanup(self):
         #if self.output: self.output.Close()
-        for output in self.analysis_instance.outputs: output.close()
+        analysis_instance = getattr(self,'analysis_instance',None)
+        if analysis_instance is not None:
+            for output in self.analysis_instance.outputs: output.close()
+
         if self.logger_file:
             self.logger_file.flush()
             self.logger_file.close()
