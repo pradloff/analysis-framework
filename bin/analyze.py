@@ -146,7 +146,7 @@ def analyze(
     else: entries = analysis_instance.pchain.get_entries()
 
     outputs = analysis_instance.outputs
-
+    print 'Creating outputs:\n{0}'.format('\n\t'.join(outputs.name for output in outputs))
     #del analysis_instance
 
     ranges = [[i*(entries/num_processes),(i+1)*(entries/num_processes)] for i in range(num_processes)]
