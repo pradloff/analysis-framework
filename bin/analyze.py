@@ -113,7 +113,7 @@ def analyze(
             if self.logger_file: self.logger_file.close()
 
     full_output = os.path.abspath(output)
-
+    print full_output
     analysis_constructor = __import__(module_name,globals(),locals(),[analysis_name]).__dict__[analysis_name]
 
     analysis_instance = analysis_constructor()
@@ -146,7 +146,7 @@ def analyze(
     else: entries = analysis_instance.pchain.get_entries()
 
     outputs = analysis_instance.outputs
-    print 'Creating outputs:\n{0}'.format('\n\t'.join(outputs.name for output in outputs))
+    print 'Creating outputs:{0}'.format([outputs.name for output in outputs])
     #del analysis_instance
 
     ranges = [[i*(entries/num_processes),(i+1)*(entries/num_processes)] for i in range(num_processes)]

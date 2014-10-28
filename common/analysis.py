@@ -30,11 +30,13 @@ class analysis():
     def add_result_function(self,*result_functions):
         self.result_functions += result_functions
         for result_function in self.result_functions:
+            print result_function,result_function.outputs
             self.outputs += result_function.outputs
 
     def add_meta_result_function(self,*result_functions):
         self.meta_result_functions += result_functions
         for meta_result_function in self.meta_result_functions:
+            print meta_result_function,meta_result_function.outputs
             self.outputs += meta_result_function.outputs
                 
     def add_file(self,*files):
