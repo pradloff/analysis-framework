@@ -145,7 +145,7 @@ def analyze(
         entries = min([int(entries),analysis_instance.pchain.get_entries()])
     else: entries = analysis_instance.pchain.get_entries()
 
-	outputs = analysis_instance.get_outputs()
+    outputs = analysis_instance.outputs
 
     #del analysis_instance
 
