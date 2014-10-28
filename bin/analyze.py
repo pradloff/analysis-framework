@@ -138,7 +138,7 @@ def analyze(
     os.symlink(dictionary_location, directory+'/dictionaries')
     cwd = os.getcwd()
     atexit.register(os.chdir,cwd)
-    atexit.register(shutil.rmtree,os.path.abspath(directory))
+    #atexit.register(shutil.rmtree,os.path.abspath(directory))
     os.chdir(directory)
 
     if entries is not None:
