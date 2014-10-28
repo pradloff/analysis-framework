@@ -138,7 +138,7 @@ def analyze(
     os.symlink(dictionary_location, directory+'/dictionaries')
     cwd = os.getcwd()
     atexit.register(os.chdir,cwd)
-    #atexit.register(shutil.rmtree,os.path.abspath(directory))
+    atexit.register(shutil.rmtree,os.path.abspath(directory))
     os.chdir(directory)
 
     if entries is not None:
@@ -201,7 +201,7 @@ def analyze(
             grl = ' -g {0}'.format(' '.join(grl)) if grl else '',
             args = ' '.join(args),
             )
-        print child_call
+        #print child_call
         watchers.append(watcher(suffix,error,logger,subprocess.Popen(child_call.split()),'Process {0}: '.format(process_number)))
 
     #Monitor
