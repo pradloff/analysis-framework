@@ -160,12 +160,12 @@ class analyze_slice():
         
         for result_function in self.analysis_instance.result_functions:
             for result in result_function.results.values():
-                try: result.SetDirectory(self.output)
+                try: result.SetDirectory(self.output.TFile)
                 except AttributeError: pass
 
         for meta_result_function in self.analysis_instance.meta_result_functions:
             for result in meta_result_function.results.values():
-                try: result.SetDirectory(self.output)
+                try: result.SetDirectory(self.output.TFile)
                 except AttributeError: pass
 
         if self.error_file: self.error_file.flush()
