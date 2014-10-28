@@ -74,8 +74,8 @@ def analyze(
     ):
 
     class watcher():
-        def __init__(self,output,error,logger,child,prefix):
-            self.result = output    
+        def __init__(self,directory,error,logger,child,prefix):
+			self.directory = directory
             self.error = error
             self.logger = logger
             self.child = child
@@ -145,7 +145,9 @@ def analyze(
         entries = min([int(entries),analysis_instance.pchain.get_entries()])
     else: entries = analysis_instance.pchain.get_entries()
 
-    del analysis_instance
+	outputs = analysis_instance.get_outputs()
+
+    #del analysis_instance
 
     ranges = [[i*(entries/num_processes),(i+1)*(entries/num_processes)] for i in range(num_processes)]
     ranges[-1][-1]+= entries%(num_processes)
@@ -165,16 +167,23 @@ def analyze(
         args += g[:]
 
     watchers = []
+    
+    directories = []
+    
     for process_number in range(num_processes):
-        if num_processes>1: suffix = '_{0:0>{1}}'.format(process_number,int(log(num_processes-1,10))+1)
+        if num_processes>1: suffix = '{0:0>{1}}'.format(process_number,int(log(num_processes-1,10))+1)
         else: suffix = ''
         
+        directories.append(os.path.dirname(suffix+'/.'))
+        os.makedir(suffix)
+    	os.symlink(dictionary_location, suffix+'/dictionaries')
+        
         start,end = ranges[process_number]
-        output = 'result{0}.root'.format(suffix)
-        error = 'error{0}.out'.format(suffix)
-        logger = 'logger{0}.out'.format(suffix)
+        output = 'result.root'.format(suffix)
+        error = 'error.out'.format(suffix)
+        logger = 'logger.out'.format(suffix)
 
-        child_call = 'analyze_singlet.py -a {analysis_name} -m {module_name} -n {tree} -s {start} -e {end} -t {files_text} -o {output} -z {error} -l {logger}{keep}{grl} {args}'.format(
+        child_call = 'analyze_singlet.py -a {analysis_name} -m {module_name} -n {tree} -s {start} -e {end} -t {files_text} -d {directory} -o {output} -z {error} -l {logger}{keep}{grl} {args}'.format(
             analysis_name = analysis_name,
             module_name = module_name,
             tree = tree,
@@ -182,6 +191,7 @@ def analyze(
             end = end,
             files_text = files_text,
             output = output,
+            directory = suffix,
             error = error,
             logger = logger,
             keep = ' --keep' if keep else '',
@@ -189,10 +199,10 @@ def analyze(
             args = ' '.join(args),
             )
         
-        watchers.append(watcher(output,error,logger,subprocess.Popen(child_call.split()),'Process {0}: '.format(process_number)))
+        watchers.append(watcher(suffix,error,logger,subprocess.Popen(child_call.split()),'Process {0}: '.format(process_number)))
 
     #Monitor
-    results = []
+    #results = []
     exitcodes = []
     finished = [False for i in range(num_processes)]
     
@@ -207,7 +217,7 @@ def analyze(
                     if exitcode: print 'Process {0} failed'.format(process_number)
                     else: print 'Process {0} finished successfully'.format(process_number)
                     exitcodes.append(exitcode)
-                    results.append(watcher.result)
+                    #results.append(watcher.result)
                     finished[process_number]=True
             if all(finished): break
 
@@ -225,7 +235,12 @@ def analyze(
 
     os.chdir(cwd)
     mkpath(os.path.dirname(full_output))
+    os.chdir(os.path.dirname(full_output))
     
+    for output in outputs:
+    	output.merge(directories)
+    
+    """
     from helper import root_quiet
     with root_quiet(filters=["\[TFile::Cp\]"]):
         if num_processes>1:
@@ -239,7 +254,7 @@ def analyze(
             shutil.move(directory+'/'+results[0],full_output)
 
     print '{0} created'.format(full_output)
-
+	"""
 if __name__ == '__main__':
 
     files = []

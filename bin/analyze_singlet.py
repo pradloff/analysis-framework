@@ -2,6 +2,7 @@
 
 if __name__=='__main__':
 
+	import os
     import sys
     import argparse
     import atexit
@@ -12,6 +13,7 @@ if __name__=='__main__':
     parser.add_argument('-m','--module',dest='MODULE',required=True,help='Module containing analysis class.')
     parser.add_argument('-a','--analysis',dest='ANALYSIS',required=True,help='Name of analysis to use.')
     parser.add_argument('-o','--output',dest='OUTPUT',required=True,help='Name to give output ROOT file.')
+    parser.add_argument('-d',dest='DIRECTORY',default='.',help='Run directory')
     parser.add_argument('-l','--logger',dest='LOGGER',default='',help='Name to give output logger file.')
     parser.add_argument('-z','--error',dest='ERROR',default='',help='Name to give error logger file.')
     parser.add_argument('-s',type=int,dest='START',required=True,help='Entry to start processing.')
@@ -29,6 +31,9 @@ if __name__=='__main__':
 
     args = parser.parse_args(args)
     from common.analysis import analyze_slice
+
+	if not os.path.exists(args.DIRECTORY): os.mkdir(args.DIRECTORY)
+	os.chdir(args.DIRECTORY)
 
     singlet = analyze_slice(
         args.MODULE,

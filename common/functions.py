@@ -7,6 +7,14 @@ import textwrap
 import itertools
 import types
 
+class output_base():
+    def __init__(self,name):
+        self.name = name
+    def merge(self,directories):
+        raise RuntimeError('merge undefined')
+    def close(self):
+        raise RuntimeError('close undefined')
+
 class parser(argparse.ArgumentParser):
     def error(self,message):
         sys.stderr.write('error: {0}\n'.format(message))
@@ -149,22 +157,24 @@ class event_function(function,base):
     def __init__(self):
         self.required_branches = []
         self.keep_branches = []
-	self.break_exceptions = []
         self.create_branches = {}
-    
+        self.break_exceptions = []
+        
     def __call__(self,event):
         return
 
 class result_function(function,base):
     def __init__(self):
         self.results = {}
-    
+        self.outputs = []
+        
     def __call__(self,event):
         return
 
 class meta_result_function(function,base):
     def __init__(self):
         self.results = {}
+        self.outputs = []
 
     def __call__(self,files):
         return

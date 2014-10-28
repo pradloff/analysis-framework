@@ -1,6 +1,7 @@
 from pchain import pchain
 from common.standard import in_grl, skim, cutflow, compute_mc_weight
-from common.functions import EventBreak
+from common.functions import EventBreak, output_base
+
 class analysis():
 
     def __init__(self):
@@ -11,7 +12,7 @@ class analysis():
         self.required_branches = []
         self.create_branches = {}
         self.keep_branches = []
-	self.break_exceptions = []
+        self.break_exceptions = []
 
         self.files = []
         self.tree = 'physics'
@@ -19,17 +20,23 @@ class analysis():
 
         self.keep_all = False
     
+        self.outputs = []
+    
     def add_event_function(self,*event_functions):
         self.event_functions += event_functions
-	for event_function in event_functions:
-		self.break_exceptions += event_function.break_exceptions
+        for event_function in event_functions:
+            self.break_exceptions += event_function.break_exceptions
 	
     def add_result_function(self,*result_functions):
         self.result_functions += result_functions
+        for result_function in self.result_functions:
+            self.outputs += result_function.outputs
 
     def add_meta_result_function(self,*result_functions):
         self.meta_result_functions += result_functions
-    
+        for meta_result_function in self.meta_result_functions:
+            self.outputs += meta_result_function.outputs
+                
     def add_file(self,*files):
         for file_ in files:
             if file_ in self.files: continue
@@ -64,6 +71,26 @@ from time import time
 from common.event import event_object
 from common.standard import skim
 import code
+from helper import root_quiet
+
+class ROOT_output(output_base):
+    def __init__(self,name):
+        super(ROOT_output,self).__init__(name)
+        self.TFile = ROOT.TFile(name,'RECREATE')
+    
+    def cd(self):
+        self.TFile.cd()
+        
+    def close(self):
+        self.TFile.Close()
+
+    def merge(self,directories):
+        with root_quiet(filters=["\[TFile::Cp\]"]):
+                merger = ROOT.TFileMerger()
+                if os.path.exists(self.name): os.remove(self.name)
+                merger.OutputFile(self.name)
+                for directory in directories: merger.AddFile(directory+'/'+self.name)
+                merger.Merge()
 
 class analyze_slice():
 
@@ -114,13 +141,16 @@ class analyze_slice():
         generate_dictionaries()
 
         #Create output
-        self.output = ROOT.TFile(self.output_name,'RECREATE')
+        self.output = ROOT_output(self.output_name)
+        #self.output = ROOT.TFile(self.output_name,'RECREATE')
 
         #Create local copy of analysis
         self.analysis_instance = analysis_constructor()
         self.analysis_instance.tree = self.tree
         self.analysis_instance.grl = self.grl
         self.analysis_instance.keep_all = self.keep
+
+        self.analysis_instance.outputs.append(self.output)
 
         with open(self.files) as f: files = [line.strip() for line in f.readlines() if line.strip()]
         self.analysis_instance.add_file(*files)
@@ -154,7 +184,7 @@ class analyze_slice():
         result_function_calls = [result_function_.__call__ for result_function_ in self.analysis_instance.result_functions]
         get_branches = self.analysis_instance.pchain.get_branches
         
-	break_exceptions = tuple(self.analysis_instance.break_exceptions)
+        break_exceptions = tuple(self.analysis_instance.break_exceptions)
 
         for entry in xrange(self.start,self.end):
             #Create new event object (basically just a namespace)
@@ -189,8 +219,7 @@ class analyze_slice():
                 if self.error_file: self.error_file.flush()
                 if self.logger_file: self.logger_file.flush()
 
-        #Handle results
-
+        #Handle ROOT results
         for result_function in self.analysis_instance.result_functions:
             for result in result_function.results.values():
                 self.output.cd()
@@ -205,15 +234,15 @@ class analyze_slice():
                 #Write meta-result function items to output
                 result.Write()
 
-        
-        print '{0}% complete, {1} Hz'.format(round(done,2), round(rate,2))  
+        print '{0}% complete, {1} Hz'.format(round(done,2), round(rate,2))
 
         if self.error_file: self.error_file.flush()
         if self.logger_file: self.logger_file.flush()
         self.exitcode = 0
 
     def cleanup(self):
-        if self.output: self.output.Close()
+        #if self.output: self.output.Close()
+        for output in self.analysis_instance.outputs: output.close()
         if self.logger_file:
             self.logger_file.flush()
             self.logger_file.close()
