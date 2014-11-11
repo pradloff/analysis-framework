@@ -20,6 +20,7 @@ class root_quiet(object):
         re.compile("Warning in <TClass::TClass>: no dictionary for class."),
         re.compile("Warning in <TEnvRec::ChangeValue>: duplicate entry."),
         re.compile("Error in <TStreamerInfo::BuildOld>:."),
+        re.compile("TClassTable::Add:0: RuntimeWarning:."),
         ]
     def __init__(self, filters = DefaultFilter):
         self._dummy = False # if dummy, we don't really shut-up ROOT...

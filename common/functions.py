@@ -41,39 +41,29 @@ class arg():
     def __call__(self):
         return self.value
 
+
+#special init for functions to defer their actual instantiation and parse cla
 def __init__(self,*args,**kwargs):
-    #self.__dict__['__set'] = False
-    #super(event_function, self).__init__()
-    #print '__init__'
-    #event_function.__init__(self)
     self.__args = args
     self.__kwargs = kwargs
 
-    #print '__init__ default'
     dyn_parser = parser(
         prog=self.__class__.__name__,
         formatter_class=argparse.RawTextHelpFormatter,
         epilog=textwrap.dedent('\n\r-----------'),
         )
 
-    #argspec = inspect.getargspec(super(self.__class__, self).__deferred_init__)
-
     argspec = inspect.getargspec(self.__deferred_init__)
 
     arg_dict = {}
-
     if argspec.defaults is not None:
         for arg_name,arg_value in [(_arg_name,_arg_value) for _arg_name,_arg_value in zip(argspec.args[-len(argspec.defaults):],argspec.defaults) if isinstance(_arg_value,arg)]:
             arg_dict[arg_name] = arg_value
 
-    #only need to do command-line stuff if the function has an expectation of options
     if arg_dict:
-        cla={}
-    
+        cla={}    
         for arg_name,arg_value in arg_dict.items():
-        
             if arg_name in kwargs: arg_value.value = kwargs[arg_name]
-
             cla[arg_name]=arg_value
             dyn_parser.add_argument(
                 '--'+arg_name,
@@ -88,7 +78,6 @@ def __init__(self,*args,**kwargs):
         help = False
         for i,(k,g) in enumerate(itertools.groupby(sys.argv,lambda x:x=='-')):
             g=list(g)
-
             if all([
                 not i,
                 any([
@@ -97,10 +86,9 @@ def __init__(self,*args,**kwargs):
                     ]),
                 ]): help = True
             if k: continue
-
             if g[0]!=self.__class__.__name__: continue
             args += g[1:]
-
+            
         for arg_name,arg_value in arg_dict.items():
         	self.__dict__['__kwargs'][arg_name] = arg_value.value
 
@@ -110,10 +98,6 @@ def __init__(self,*args,**kwargs):
             for kw,value in dyn_parser.parse_args(args).__dict__.items():
                 self.__dict__['__kwargs'][kw] = value
 
-        #print '__init__',self
-        #print self.__dict__['__kwargs']
-
-#from common.meta import function
 from common.base import base
 
 class function_meta(type):
@@ -124,13 +108,35 @@ class function_meta(type):
             #print dct
         super(function_meta,cls).__init__(name, bases, dct)
 
+import cPickle
+import code
+
+def memoize(func):
+    cache = {}
+    def wrapper(*args,**kwargs):
+        key = cPickle.dumps((args,kwargs))
+        if key not in cache:
+            #print 'storing'
+            result = func(*args,**kwargs)
+            cache[key] = result
+        return cache[key]
+    return wrapper
+
+class memo_meta(type):
+    @memoize
+    def __call__(cls,*args,**kwargs):
+        return super(memo_meta,cls).__call__(*args,**kwargs)
+
 class output_base(base):
-    def __init__(self,name):
-        self.name = name
-    def merge(self,directories):
-        raise RuntimeError('merge undefined')
-    def close(self):
-        raise RuntimeError('close undefined')
+    __metaclass__ = memo_meta
+    def __init__(self,file_name):
+        self.file_name = file_name
+        self.open()
+    def open(self): raise NotImplementedError
+    def merge(self,directories): raise NotImplementedError
+    def close(self): raise NotImplementedError
+
+#from common.analysis import AnalysisUnlocked
 
 class function(base):
     __metaclass__ = function_meta
@@ -141,18 +147,17 @@ class function(base):
             '__deferred_init__',
             '__class__',
             ]:
-            #print attr
             setattr(self.__class__, '__getattribute__', types.MethodType(object.__getattribute__,self))
-            #print 'function',self
-            #print self.__dict__['__kwargs']
-            #print self.__args
-            #print self.__kwargs
             self.__deferred_init__(*self.__dict__['__args'],**self.__dict__['__kwargs'])
-            #try: self.__deferred_init__(*self.__dict__['__args'],**self.__dict__['__kwargs'])
-            #try: super(function, self).__deferred_init__(*self.__dict__['__args'],**self.__dict__['__kwargs'])
-            #except TypeError: raise InstantiationError(self.__class__,self.__dict__['__args'],self.__dict__['__kwargs'])
-        return super(function, self).__getattribute__(attr)
 
+        return super(function, self).__getattribute__(attr)
+        
+    def set_analysis(self,analysis):
+        self.analysis = analysis
+    def get_analysis(self):
+        analysis = getattr(self,'analysis',None)
+        if analysis is None: raise AnalysisUnlocked()
+        
 class event_function(function,base):
     def __init__(self):
         self.required_branches = []
@@ -164,17 +169,17 @@ class event_function(function,base):
         return
 
 class result_function(function,base):
-    def __init__(self):
-        self.results = {}
-        self.outputs = []
+    def __init__(self,output):
+        #self.results = {}
+        self.output = output
         
     def __call__(self,event):
         return
 
 class meta_result_function(function,base):
-    def __init__(self):
-        self.results = {}
-        self.outputs = []
+    def __init__(self,output):
+        #self.results = {}
+        self.output = output
 
     def __call__(self,files):
         return

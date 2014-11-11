@@ -2,42 +2,79 @@ from pchain import pchain
 from common.standard import in_grl, skim, cutflow, compute_mc_weight
 from common.functions import EventBreak, output_base
 
+class AnalysisLocked(RuntimeError):
+    def __init__(self,message='Analysis locked'):
+        super(AnalysisLocked, self).__init__(message)
+        self.message = message
+
+class AnalysisUnlocked(RuntimeError):
+    def __init__(self,message='Analysis unlocked'):
+        super(AnalysisUnlocked, self).__init__(message)
+        self.message = message
+        
 class analysis():
 
-    def __init__(self):
+    def __init__(self,tree,files,stream_name,output_dir):
+    
+        self.tree = tree
+        self.files = files
+        self.pchain = pchain(self.tree)
+        self.pchain.add_files(self.files)
+
+        self.stream_name = stream_name
+        self.output_dir = output_dir
+    
         self.event_functions = []
         self.result_functions = []
         self.meta_result_functions = []
 
-        self.required_branches = []
-        self.create_branches = {}
-        self.keep_branches = []
-        self.break_exceptions = []
+        #self.required_branches = []
+        #self.create_branches = {}
+        #self.keep_branches = []
+        #self.break_exceptions = []
 
-        self.files = []
-        self.tree = 'physics'
-        self.grl = []
+        #self.files = files
+        #self.tree = tree
+        #self.output_dir = output_dir
+        #self.tree = 'physics'
+        #self.grl = []
 
-        self.keep_all = False
+        #self.keep_all = False
     
-        self.outputs = []
-    
+        self.outputs = set([])
+        self.closed = False
+        
+    def close(self):
+        if not self.closed:
+            self.add_standard_functions()
+            for event_function in event_functions:
+                event_function.set_analysis(self)
+                self.break_exceptions += event_function.break_exceptions
+            for result_function in self.result_functions:
+                result_function.set_analysis(self)
+                if result_function.output is not None: self.outputs.add(result_function.output)
+            for meta_result_function in self.meta_result_functions:
+                meta_result_function.set_analysis(self)
+                if meta_result_function.output is not None: self.outputs.add(meta_result_function.output)            
+            self.setup_chain()
+            self.closed = True
+        else: raise AnalysisLocked()
+        
     def add_event_function(self,*event_functions):
         self.event_functions += event_functions
-        for event_function in event_functions:
-            self.break_exceptions += event_function.break_exceptions
+
 	
     def add_result_function(self,*result_functions):
         self.result_functions += result_functions
-        for result_function in self.result_functions:
-            print result_function,result_function.outputs
-            self.outputs += result_function.outputs
+        #for result_function in self.result_functions:
+            #print result_function,result_function.outputs
+            #self.outputs += result_function.outputs
 
-    def add_meta_result_function(self,*result_functions):
+    def add_meta_result_function(self,*meta_result_functions):
         self.meta_result_functions += result_functions
-        for meta_result_function in self.meta_result_functions:
-            print meta_result_function,meta_result_function.outputs
-            self.outputs += meta_result_function.outputs
+        #for meta_result_function in self.meta_result_functions:
+        #    #print meta_result_function,meta_result_function.outputs
+        #    self.outputs += meta_result_function.outputs
                 
     def add_file(self,*files):
         for file_ in files:
@@ -45,13 +82,13 @@ class analysis():
             self.files.append(file_)
         
     def add_standard_functions(self):
-        if self.grl: self.event_functions = [in_grl(self.grl)]+self.event_functions
+        #if self.grl: self.event_functions = [in_grl(self.grl)]+self.event_functions
         self.event_functions = [compute_mc_weight()]+self.event_functions
-        self.add_result_function(cutflow(self.break_exceptions))
+        self.add_result_function(cutflow(),skim())
+        
         
     def setup_chain(self):
-        self.pchain = pchain(self.tree)
-        self.pchain.add_files(self.files)
+
         for event_function in self.event_functions:
             self.required_branches += event_function.required_branches
             for branch_name,branch_type in event_function.create_branches.items():
@@ -75,15 +112,30 @@ from common.standard import skim
 import code
 from helper import root_quiet
 
-class ROOT_output(output_base):
-    def __init__(self,name):
-        super(ROOT_output,self).__init__(name)
-        self.TFile = ROOT.TFile(name,'RECREATE')
+class root_output(output_base):
+    def __init__(self,file_name):
+        self.overwrite = True
+        super(root_output,self).__init__(name)
+        self.results = []
+        self.is_open = False
+        #self.cd()
     
+    def open(self):
+        if os.path.exists(self.file_name) and not self.overwrite: raise RuntimeError('{0} exists'.format(self.file_name)) 
+        self.TFile = ROOT.TFile(self.name,'RECREATE')
+    
+    def add_result(self,result):
+        self.cd()
+        try: result.SetDirectory(self.TFile)
+        except AttributeError: pass
+        self.results.append(result)
+        
     def cd(self):
         self.TFile.cd()
         
     def close(self):
+        self.cd()
+        for result in self.results: result.Write()
         self.TFile.Close()
 
     def merge(self,directories):
@@ -102,20 +154,20 @@ class analyze_slice():
         module_name,
         analysis_name,
         tree,
-        grl,
+        #grl,
         files,
         start,
         end,
         output_name,
         error_file_name,
         logger_file_name,
-        keep,
+        #keep,
         ):
 
         self.module_name = module_name
         self.analysis_name = analysis_name
         self.tree = tree
-        self.grl = grl
+        #self.grl = grl
         self.files = files
         self.start = start
         self.end = end
@@ -150,7 +202,7 @@ class analyze_slice():
         #Create local copy of analysis
         self.analysis_instance = analysis_constructor()
         self.analysis_instance.tree = self.tree
-        self.analysis_instance.grl = self.grl
+        #self.analysis_instance.grl = self.grl
         self.analysis_instance.keep_all = self.keep
 
         self.analysis_instance.outputs.append(self.output)

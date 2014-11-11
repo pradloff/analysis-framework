@@ -2,6 +2,7 @@
 
 if __name__ == '__main__':
 
+    import tempfile
     import sys
     from common.functions import parser
     import argparse
@@ -21,9 +22,9 @@ if __name__ == '__main__':
     parser.add_argument('-o','--output',dest='OUTPUT',required=True,help='Name to give output ROOT file.')
     parser.add_argument('--entries',default=None,dest='ENTRIES',help='Number of entries to process.')   
     parser.add_argument('-n','--tree',dest='TREE',required=True,help='TTree name which contains event information.')
-    parser.add_argument('-g','--grl',default=[],dest='GRL',nargs='+',help='Good run list(s) XML file to use.')
+    #parser.add_argument('-g','--grl',default=[],dest='GRL',nargs='+',help='Good run list(s) XML file to use.')
     parser.add_argument('-p','--processes',default=1,dest='PROCESSES',type=int,help='Number of processes to use.')
-    parser.add_argument('--keep',default=False,dest='KEEP',action='store_true',help='Keep all branches, default False')
+    #parser.add_argument('--keep',default=False,dest='KEEP',action='store_true',help='Keep all branches, default False')
 
     args = []
     for i,(k,g) in enumerate(itertools.groupby(sys.argv,lambda x:x=='-')):
@@ -65,11 +66,11 @@ def analyze(
     analysis_name,
     files,
     tree,
-    grl,
+    #grl,
     num_processes,
     output,
     entries,
-    keep,
+    #keep,
     help,
     ):
 
@@ -81,6 +82,7 @@ def analyze(
             self.child = child
             self.prefix = prefix
 
+            #attach these to indicated files
             self.error_file = None
             self.logger_file = None
 
@@ -113,7 +115,7 @@ def analyze(
             if self.logger_file: self.logger_file.close()
 
     full_output = os.path.abspath(output)
-    print full_output
+    #print full_output
     analysis_constructor = __import__(module_name,globals(),locals(),[analysis_name]).__dict__[analysis_name]
 
     analysis_instance = analysis_constructor()
@@ -122,9 +124,12 @@ def analyze(
     dictionary_location = generate_dictionaries()
 
     analysis_instance.tree = tree
-    analysis_instance.grl = grl
+    #analysis_instance.grl = grl
     analysis_instance.add_file(*files)
     analysis_instance.setup_chain()
+    analysis_instance.set_output(full_output)
+
+    directory = tempfile.mkdtemp()
 
     while True:
         directory = '/tmp/'+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
@@ -155,7 +160,7 @@ def analyze(
     files_text = 'files.txt'
     with open(files_text,'w') as f:
         for file_ in files:
-            print file_
+            #print file_
             f.write(file_+'\n')
 
     #Start children
@@ -186,7 +191,7 @@ def analyze(
         error = 'error.out'.format(suffix)
         logger = 'logger.out'.format(suffix)
 
-        child_call = 'analyze_singlet.py -a {analysis_name} -m {module_name} -n {tree} -s {start} -e {end} -t {files_text} -d {directory} -o {output} -z {error} -l {logger}{keep}{grl} {args}'.format(
+        child_call = 'analyze_singlet.py -a {analysis_name} -m {module_name} -n {tree} -s {start} -e {end} -t {files_text} -d {directory} -o {output} -z {error} -l {logger} {args}'.format(
             analysis_name = analysis_name,
             module_name = module_name,
             tree = tree,
@@ -197,8 +202,6 @@ def analyze(
             directory = suffix,
             error = error,
             logger = logger,
-            keep = ' --keep' if keep else '',
-            grl = ' -g {0}'.format(' '.join(grl)) if grl else '',
             args = ' '.join(args),
             )
         #print child_call
@@ -241,7 +244,7 @@ def analyze(
     os.chdir(os.path.dirname(full_output))
     
     for output in outputs:
-        print output.name
+        #print output.name
     	output.merge(directories)
     
     """
@@ -283,10 +286,10 @@ if __name__ == '__main__':
         args.ANALYSIS,
         files,
         args.TREE,
-        args.GRL,
+        #args.GRL,
         args.PROCESSES,
         args.OUTPUT,
         args.ENTRIES,
-        args.KEEP,
+        #args.KEEP,
         help,
         )

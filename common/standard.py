@@ -91,8 +91,11 @@ class in_grl(event_function):
 
 class cutflow(result_function):
 
-	def __init__(self,break_exceptions):
-		result_function.__init__(self)
+	def __init__(self,):
+		super(skim,self).__init__(None)
+		#result_function.__init__(self)
+		analysis = self.get_analysis()
+		break_exceptions = analysis.break_exceptions
 
 		self.break_exceptions = dict((break_exception,i+1) for i,break_exception in enumerate(break_exceptions))
 		self.max = len(break_exceptions)+2
@@ -163,11 +166,12 @@ lookup_created = {
 	}
 
 class skim(result_function):
-
-	def __init__(self,analysis):
-		result_function.__init__(self)
+	def __init__(self):
+		output_name = None
+		super(skim,self).__init__(None)
+		#result_function.__init__(self)
 		
-		self.analysis = analysis
+		self.analysis = self.get_analysis()
 		self.pchain = self.analysis.pchain
 
 		#Load struct for branches with types in [int,bool,float]

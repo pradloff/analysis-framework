@@ -4,6 +4,14 @@ import re
 from array import array
 import os
 
+from functions import memoize
+
+class branch()
+    def __init__(self,name,base)
+
+
+
+
 def generate_dictionaries():
 	cwd = os.getcwd()
 	try: os.mkdir('dictionaries')
@@ -57,17 +65,17 @@ class pchain():
 		self.chain.SetCacheSize(10000000)
 		self.chain.SetCacheLearnEntries(10)
 
-		self.branch_names = []
+		#self.branch_names = []
 		self.branch_types = {}
-		self.branch_values = {}
+		#self.branch_values = {}
 		self.branches = {}
-		self.created_branches = {}
+		#self.created_branches = {}
 
-		self.branches_union = None
-		self.branches_intersection = None
+		#self.branches_union = None
+		#self.branches_intersection = None
 
 		self.files = []
-		self.files_branches = {}
+		#self.files_branches = {}
 
 		self.current_file_number = -1
 		self.first_entry_files = []
@@ -80,14 +88,9 @@ class pchain():
 
 	def add_files(self,files):
 		for f in files:
-			tfile = ROOT.TFile.Open(f)
-			try: tree = getattr(tfile,self.tree,None)
-			except ReferenceError: raise OSError,'File {0} does not exist or could not be opened'.format(f)
-			if any([
-				not tree,
-				not isinstance(tree,ROOT.TTree),
-				]): raise ValueError,'No matches for TTree "{0}" in file {1}.'.format(self.tree,f)
+			self.validate_file(f)
 			self.files.append(f)
+			
 			self.files_branches[f] = [branch.GetName() for branch in tree.GetListOfBranches()]
 			for leaf in tree.GetListOfLeaves():
 				if leaf.GetName() not in self.branch_types: self.branch_types[leaf.GetName()] = leaf.GetTypeName()
@@ -95,7 +98,22 @@ class pchain():
 					raise TypeError('Branch typing for {0} changes in file {1}'.format(leaf.GetName(),f))
 			tfile.Close()
 			self.chain.Add(f)
-
+			
+    def validate_file(self,f):
+		tfile = ROOT.TFile.Open(f)
+		try: tree = getattr(tfile,self.tree,None)
+		except ReferenceError: raise OSError,'File {0} does not exist or could not be opened'.format(f)
+		if any([
+			not tree,
+			not isinstance(tree,ROOT.TTree),
+			]): raise ValueError,'No matches for TTree "{0}" in file {1}.'.format(self.tree,f)
+		if self.files:
+			for leaf in tree.GetListOfLeaves():
+				if leaf.GetName() not in self.branch_types: self.branch_types[leaf.GetName()] = leaf.GetTypeName()
+				elif leaf.GetTypeName()!=self.branch_types[leaf.GetName()]:
+					raise TypeError('Branch typing for {0} changes in file {1}'.format(leaf.GetName(),f))			
+			
+			
 	def get_available_branch_names(self,required=True):
 		#require all trees in all files to have the requested branch
 		if required:
@@ -167,6 +185,7 @@ class pchain():
 			
 	def set_branch(self,branch_name):
 		branch_type = self.branch_types[branch_name]
+		
 
 		if branch_type in ['Char_t','Int_t','Bool_t','UInt_t']:
 			self.branch_values[branch_name]=array('i',1*[0])
