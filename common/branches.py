@@ -61,7 +61,7 @@ class std_branch(branch):
                 
     def link(self,pchain):
         if self.type not in std_branch.lookup: raise TypeError('Unknown branch type {0}'.format(self.type))
-        self.value = array(lookup[self.type],[0])
+        self.value = array(std_branch.lookup[self.type],[0])
         pchain().SetBranchAddress(self.name,ROOT.AddressOf(self.value)) 
 
     def get_value(self): return self.value[0]
