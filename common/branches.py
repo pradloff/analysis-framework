@@ -26,9 +26,9 @@ class branch(object):
 	def get_entry(self,entry): self.tbranch.GetEntry(entry)
 
     def read(self,pchain):
-		self.generate_dictionary()
+		super(branch,self).generate_dictionary()
 		pchain().SetBranchStatus(self.name,1)
-		self.link(pchain)
+		super(branch,self).link(pchain)
 
 class vector_branch(branch):
 	def __init__(self,name,type_):
