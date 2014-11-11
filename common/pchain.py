@@ -88,4 +88,4 @@ class pchain():
             branch = self.branches[branch_name]
             branch.get_entry(self.current_entry)
             event.__dict__[branch_name] = branch.get_value()
-            value = self.branch_values[branch_name]
+            
