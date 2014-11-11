@@ -19,7 +19,7 @@ class branch(object):
     	self.type = type_
     	self.tbranch = None
     	
-   	def generate_dictionary(self): pass
+   	def generate_dictionary(self): return
 
 	def link(self,pchain): raise NotImplementedError
 
