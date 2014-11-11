@@ -4,6 +4,7 @@ from functions import memoize
 import os
 import tempfile
 from helper import root_quiet
+from array import array
 
 @memoize
 def generate_dictionary(name,base):
