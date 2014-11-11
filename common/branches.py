@@ -59,7 +59,7 @@ class std_branch(branch):
         super(std_branch,self).__init__(name,type_)
                 
     def link(self,pchain):
-        if self.type not in lookup: raise TypeError('Unknown branch type {0}'.format(self.type))
+        if self.type not in std_branch.lookup: raise TypeError('Unknown branch type {0}'.format(self.type))
         self.value = array(lookup[self.type],[0])
         pchain().SetBranchAddress(self.name,ROOT.AddressOf(self.value)) 
 
