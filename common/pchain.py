@@ -69,8 +69,8 @@ class pchain():
             current_file = self.files[self.current_file_number]
             self.first_entry_files.append(current_file)
             self.current_file_number = file_number
-            for branch_name,branch in self.branches.items():
-                branch.tbranch = self().GetBranch(branch_name)
+            #for branch_name,branch in self.branches.items():
+            #    branch.tbranch = self().GetBranch(branch_name)
         
     def get_branches(self,event,branch_names):
         for branch_name in branch_names:

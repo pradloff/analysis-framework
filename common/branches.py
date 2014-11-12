@@ -19,10 +19,14 @@ def generate_wrap(name):
    	return getattr(ROOT,'_'+name)()
 
 class branch(object):
-    def __init__(self,name,type_):
+    def __init__(self,name,type_,chain):
         self.name = name
         self.type = type_
-        self.tbranch = None
+        self.chain = chain
+    
+    @property
+    def tbranch(self):
+    	return self.chain.GetBranch(self.name)
         
     def generate_dictionary(self): pass
 
@@ -30,17 +34,20 @@ class branch(object):
 
     def get_entry(self,entry): self.tbranch.GetEntry(entry)
 
-    def read(self,pchain):
-       	self.generate_dictionary()
-        pchain().SetBranchStatus(self.name,1)
-        self.link(pchain)
+    def read(self):
+       	#self.generate_dictionary()
+        self.chain.SetBranchStatus(self.name,1)
+        self.read_link()
 
-	def write(self,chain):
+	def write_link(self):
 		pass
 
+	def write(self):
+		pass
+		
 class vector_branch(branch):
-    def __init__(self,name,type_):
-        super(vector_branch,self).__init__(name,type_)
+    def __init__(self,name,type_,chain):
+        super(vector_branch,self).__init__(name,type_,chain)
         
     def generate_dictionary(self):
         generate_dictionary(self.type,'vector')
@@ -49,37 +56,38 @@ class vector_branch(branch):
     	self.value.clear()
     	for value in values: self.value.push_back(value)
     
-    def link(self,pchain):
+    def read_link(self):
         self.value = getattr(ROOT,self.type)()
-        pchain().SetBranchAddress(self.name,ROOT.AddressOf(self.value))
+        self.chain.SetBranchAddress(self.name,ROOT.AddressOf(self.value))
 
     def get_value(self): return self.value
 
 class std_branch(branch):
 
-    lookup = {
-        'Char_t':'i',
-        'Int_t':'i',
-        'Bool_t':'i',
-        'UInt_t':'i',
-        'Long64_t':'l',
-        'Float_t':'f',
-        'Double_t':'d',
-        }
+    #lookup = {
+    #    'Char_t':'i',
+    #    'Int_t':'i',
+    #    'Bool_t':'i',
+    #    'UInt_t':'i',
+    #    'Long64_t':'l',
+    #    'Float_t':'f',
+    #    'Double_t':'d',
+    #    }
 
-    def __init__(self,name,type_):
-        super(std_branch,self).__init__(name,type_)
+    def __init__(self,name,type_,chain):
+        super(std_branch,self).__init__(name,type_,chain)
          
          
     def overwrite(self,value):
-    	self.value
+    	self.value.value = value
     	       
-    def link(self,pchain):
-        if self.type not in std_branch.lookup: raise TypeError('Unknown branch type {0}'.format(self.type))
-        self.value = array(std_branch.lookup[self.type],[0])
-        pchain().SetBranchAddress(self.name,self.value) 
+    def read_link(self):
+        #if self.type not in std_branch.lookup: raise TypeError('Unknown branch type {0}'.format(self.type))
+        #self.value = array(std_branch.lookup[self.type],[0])
+        self.value = generate_wrap(self.type)
+        self.chain.SetBranchAddress(self.name,ROOT.AddressOf(self.value,'value'))
 
-    def get_value(self): return self.value[0]
+    def get_value(self): return self.value.value
 
 #class
 
