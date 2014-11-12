@@ -2,6 +2,40 @@ from xml.dom.minidom import parseString
 from common.functions import event_function, result_function
 import ROOT
 import os
+from common.functions import output_base
+
+class root_output(output_base):
+    def __init__(self,directory,file_name):
+        self.overwrite = True
+        super(root_output,self).__init__(directory,file_name)
+        self.results = []
+
+    def open(self):
+        if os.path.exists(self.file_name) and not self.overwrite: raise RuntimeError('{0} exists'.format(self.file_name)) 
+        self.TFile = ROOT.TFile(self.name,'RECREATE')
+    
+    def add_result(self,result):
+        self.cd()
+        try: result.SetDirectory(self.TFile)
+        except AttributeError: pass
+        self.results.append(result)
+        
+    def cd(self):
+        self.TFile.cd()
+        
+    def close(self):
+        self.cd()
+        for result in self.results: result.Write()
+        self.TFile.Close()
+
+    def merge(self,directories):
+        with root_quiet(filters=["\[TFile::Cp\]"]):
+            merger = ROOT.TFileMerger()
+            if os.path.exists(self.name): os.remove(self.name)
+            merger.OutputFile(self.name)
+            for directory in directories: merger.AddFile(directory+'/'+self.name)
+            merger.Merge()
+        print '{0} created'.format(self.name)
 
 #Good run list parser
 def parse_grl_xml(grl_xml):
@@ -91,32 +125,39 @@ class in_grl(event_function):
 
 class cutflow(result_function):
 
-	def __init__(self,):
-		super(skim,self).__init__(None)
-		#result_function.__init__(self)
-		analysis = self.get_analysis()
-		break_exceptions = analysis.break_exceptions
+	def setup_output(self):
+		self.output = root_output(self.analysis.output_dir,self.analysis.stream_name+'.root')
 
+	def __init__(self,):
+		super(cutflow,self).__init__()
+		#result_function.__init__(self)
+		#analysis = self.get_analysis()
+		break_exceptions = self.analysis.break_exceptions
+
+		self.cutflow = ROOT.TH1F(
+			'cutflow',
+			'cutflow',
+			len(self.break_exceptions)+1,
+			0,
+			len(self.break_exceptions)+1,
+			)
+			
+		self.cutflow_weighted = ROOT.TH1F(
+			'cutflow_weighted',
+			'cutflow_weighted',
+			len(self.break_exceptions)+1,
+			0,
+			len(self.break_exceptions)+1,
+			)
+
+		self.output.add_result(self.cutflow)
+		self.output.add_result(self.cutflow_weighted)		
+		
 		self.break_exceptions = dict((break_exception,i+1) for i,break_exception in enumerate(break_exceptions))
 		self.max = len(break_exceptions)+2
 
-		self.results['cutflow'] = ROOT.TH1F(
-			'cutflow',
-			'cutflow',
-			len(self.break_exceptions)+1,
-			0,
-			len(self.break_exceptions)+1,
-			)
-		self.results['cutflow_weighted'] = ROOT.TH1F(
-			'cutflow_weighted',
-			'cutflow_weighted',
-			len(self.break_exceptions)+1,
-			0,
-			len(self.break_exceptions)+1,
-			)
-
-		self.results['cutflow'].GetXaxis().SetBinLabel(1,'input')
-		self.results['cutflow_weighted'].GetXaxis().SetBinLabel(1,'input')
+		self.cutflow.GetXaxis().SetBinLabel(1,'input')
+		self.cutflow_weighted.GetXaxis().SetBinLabel(1,'input')
 
 		names = {}
 		for break_exception,i in sorted(self.break_exceptions.items(),key= lambda tup: tup[1]):
@@ -124,25 +165,20 @@ class cutflow(result_function):
 			if name not in names: names[name] = []
 			names[name].append(break_exception)
 			
-
 		for break_exception,i in self.break_exceptions.items():
 			name = break_exception.__name__
 			if len(names[name])>1:
 				name+='_{0}'.format(names[name].index(break_exception))
-			self.results['cutflow'].GetXaxis().SetBinLabel(i+1,name)
-			self.results['cutflow_weighted'].GetXaxis().SetBinLabel(i+1,name)
-
-		#for i,break_exception_name in enumerate(['input']+[break_exception.__name__ for break_exception in self.break_exceptions]):
-		#	self.results['cutflow'].GetXaxis().SetBinLabel(i+1,break_exception_name)
-		#	self.results['cutflow_weighted'].GetXaxis().SetBinLabel(i+1,break_exception_name)
+			self.cutflow.GetXaxis().SetBinLabel(i+1,name)
+			self.cutflow_weighted.GetXaxis().SetBinLabel(i+1,name)
 
 	def __call__(self,event):
 		if event.__break__.__class__ in self.break_exceptions: stop = self.break_exceptions[event.__break__.__class__]
 		elif event.__break__ is False: stop = self.max
 		else: raise RuntimeError('Invalid break exception: {0}'.format(event.__break__))
 		for i in range(stop):
-			self.results['cutflow'].Fill(i)
-			self.results['cutflow_weighted'].Fill(i,event.__weight__)
+			self.cutflow.Fill(i)
+			self.cutflow_weighted.Fill(i,event.__weight__)
 
 lookup_description = {
 	'Char_t':'B',
@@ -166,9 +202,13 @@ lookup_created = {
 	}
 
 class skim(result_function):
+
+	def setup_output(self):
+		self.output = root_output(self.analysis.output_dir,self.analysis.stream_name+'.root')
+
 	def __init__(self):
-		output_name = None
-		super(skim,self).__init__(None)
+		
+		super(skim,self).__init__()
 		#result_function.__init__(self)
 		
 		self.analysis = self.get_analysis()

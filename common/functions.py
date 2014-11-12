@@ -169,10 +169,11 @@ class event_function(function,base):
         return
 
 class result_function(function,base):
-    def __init__(self,output):
-        #self.results = {}
-        self.output = output
+    def __init__(self):
+        self.setup_output()
         
+    def setup_output(self): raise NotImplementedError
+    
     def __call__(self,event):
         return
 

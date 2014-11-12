@@ -14,11 +14,11 @@ class AnalysisUnlocked(RuntimeError):
         
 class analysis():
 
-    def __init__(self,tree,files,stream_name,output_dir):
+    def __init__(self,tree_name,files,stream_name,output_dir):
     
-        self.tree = tree
+        self.tree_name = tree_name
         self.files = files
-        self.pchain = pchain(self.tree)
+        self.pchain = pchain(self.tree_name)
         self.pchain.add_files(self.files)
 
         self.stream_name = stream_name
@@ -105,47 +105,13 @@ class analysis():
 import os
 import sys
 import ROOT
-from common.pchain import generate_dictionaries
+#from common.pchain import generate_dictionaries
 from time import time
 from common.event import event_object
 from common.standard import skim
 import code
 from helper import root_quiet
 
-class root_output(output_base):
-    def __init__(self,file_name):
-        self.overwrite = True
-        super(root_output,self).__init__(name)
-        self.results = []
-        self.is_open = False
-        #self.cd()
-    
-    def open(self):
-        if os.path.exists(self.file_name) and not self.overwrite: raise RuntimeError('{0} exists'.format(self.file_name)) 
-        self.TFile = ROOT.TFile(self.name,'RECREATE')
-    
-    def add_result(self,result):
-        self.cd()
-        try: result.SetDirectory(self.TFile)
-        except AttributeError: pass
-        self.results.append(result)
-        
-    def cd(self):
-        self.TFile.cd()
-        
-    def close(self):
-        self.cd()
-        for result in self.results: result.Write()
-        self.TFile.Close()
-
-    def merge(self,directories):
-        with root_quiet(filters=["\[TFile::Cp\]"]):
-            merger = ROOT.TFileMerger()
-            if os.path.exists(self.name): os.remove(self.name)
-            merger.OutputFile(self.name)
-            for directory in directories: merger.AddFile(directory+'/'+self.name)
-            merger.Merge()
-        print '{0} created'.format(self.name)
         
 class analyze_slice():
 

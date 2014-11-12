@@ -11,18 +11,8 @@ class pchain():
         self.chain.SetCacheSize(10000000)
         self.chain.SetCacheLearnEntries(10)
 
-        #self.branch_names = []
-        #self.branch_types = {}
-        #self.branch_values = {}
         self.branches = {}
-        #self.created_branches = {}
-
-        #self.branches_union = None
-        #self.branches_intersection = None
-
         self.files = []
-        #self.files_branches = {}
-
         self.current_file_number = -1
         self.first_entry_files = []
 

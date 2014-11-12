@@ -13,7 +13,11 @@ def generate_dictionary(name,base):
     with root_quiet(filters=["TClassTable::Add:0: RuntimeWarning","Note: Link requested for already"]):
         ROOT.gInterpreter.GenerateDictionary(name,base)
     os.chdir(cwd)
-    
+
+def generate_wrap(name):
+	ROOT.gROOT.ProcessLine("struct _{0}{{{0} value;}};".format(name))
+   	return getattr(ROOT,'_'+name)()
+
 class branch(object):
     def __init__(self,name,type_):
         self.name = name
@@ -31,12 +35,19 @@ class branch(object):
         pchain().SetBranchStatus(self.name,1)
         self.link(pchain)
 
+	def write(self,chain):
+		pass
+
 class vector_branch(branch):
     def __init__(self,name,type_):
         super(vector_branch,self).__init__(name,type_)
         
     def generate_dictionary(self):
         generate_dictionary(self.type,'vector')
+    
+    def overwrite(self,values):
+    	self.value.clear()
+    	for value in values: self.value.push_back(value)
     
     def link(self,pchain):
         self.value = getattr(ROOT,self.type)()
@@ -58,7 +69,11 @@ class std_branch(branch):
 
     def __init__(self,name,type_):
         super(std_branch,self).__init__(name,type_)
-                
+         
+         
+    def overwrite(self,value):
+    	self.value
+    	       
     def link(self,pchain):
         if self.type not in std_branch.lookup: raise TypeError('Unknown branch type {0}'.format(self.type))
         self.value = array(std_branch.lookup[self.type],[0])
