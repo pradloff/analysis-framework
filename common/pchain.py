@@ -56,7 +56,7 @@ class pchain():
         tfile.Close()
 
     def request_branch(self,branch_name):
-        self.branches[branch_name].read(self)
+        self.branches[branch_name].read()
 
     def request_branches(self,branch_names):
         for branch_name in branch_names: self.request_branch(branch_name)
