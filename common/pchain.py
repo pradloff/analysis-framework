@@ -51,8 +51,8 @@ class pchain():
             for leaf in tree.GetListOfLeaves():
                 type_ = leaf.GetTypeName()
                 name = leaf.GetName()
-                if type_.startswith('vector'): self.branches[name] = vector_branch(name,type_)
-                else: self.branches[name] = std_branch(name,type_)
+                if type_.startswith('vector'): self.branches[name] = vector_branch(name,type_,self.chain)
+                else: self.branches[name] = std_branch(name,type_,self.chain)
         tfile.Close()
 
     def request_branch(self,branch_name):
