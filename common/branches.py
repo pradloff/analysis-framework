@@ -69,7 +69,7 @@ class vector_branch(branch):
     def write(self,chain):
         chain.Branch(
             self.name,
-            ROOT.AddressOf(self.value),
+            self.value,
             )
             
     @property
