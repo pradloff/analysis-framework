@@ -225,7 +225,6 @@ class skim(root_result):
         keep = False,
         ):
         self.keep = keep
-        print self.keep
         super(skim,self).__init__()
 
     #def __init__(self):

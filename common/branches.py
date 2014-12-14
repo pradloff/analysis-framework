@@ -63,6 +63,7 @@ class vector_branch(branch):
     	for value in values: self.value.push_back(value)
     
     def read_link(self,):
+        print self.type
         self.value = getattr(ROOT,self.type)()
         self.chain.SetBranchAddress(self.name,ROOT.AddressOf(self.value))
 

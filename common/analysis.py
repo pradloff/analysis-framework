@@ -202,7 +202,6 @@ class analysis():
             self.files.append(file_)
         
     def add_standard_functions(self):
-        print 'add standard functions'
         self.event_functions = [compute_mc_weight()]+self.event_functions
         self.add_result_function(cutflow(),skim())  
     """ 
