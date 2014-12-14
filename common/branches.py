@@ -133,6 +133,7 @@ class auto_branch(branch):
                 self.__class__ = branch_type
                 branch_type.__init__(self,name,mode,type_)
                 initialized = True
+                break
             except TypeError: pass
         if not initialized: raise TypeError('Unable to auto-initialize branch type {0}'.format(type_)) 
 #class
