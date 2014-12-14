@@ -242,7 +242,7 @@ class skim(root_result):
             for branch in [branch_ for branch_ in event_function.branches if 'w' in branch_.mode]:
                 self.created_branches[branch.name] = branch
 
-        for branch in [branch for branch in self.pchain.branches.values() if ('k' in branch.mode or self.keep) and branch.name not in self.create_branches]:
+        for branch in [branch for branch in self.pchain.branches.values() if ('k' in branch.mode or self.keep) and branch.name not in self.created_branches]:
             branch.read(self.pchain.chain)
             #print 'keeping branch {0}'.format(branch.name)
             branch.write(self.tree)
