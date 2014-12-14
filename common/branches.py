@@ -55,6 +55,8 @@ class vector_branch(branch):
     def __init__(self,name,mode,type_):
         super(vector_branch,self).__init__(name,mode)
         self.type = type_
+        try: self.value = getattr(ROOT,self.type)()
+        except AttributeError: raise TypeError('Type {0} not allowed for vector_branch'.format(self.type))
     #def generate_dictionary(self):
     #    generate_dictionary(self.type,'vector')
     
@@ -63,7 +65,6 @@ class vector_branch(branch):
     	for value in values: self.value.push_back(value)
     
     def read_link(self,):
-        print self.type
         self.value = getattr(ROOT,self.type)()
         self.chain.SetBranchAddress(self.name,ROOT.AddressOf(self.value))
 
@@ -99,6 +100,7 @@ class std_branch(branch):
     def __init__(self,name,mode,type_):
         super(std_branch,self).__init__(name,mode)
         self.type = type_
+        if self.type not in std_branch.lookup: raise TypeError('Type {0} not allowed for std_branch'.format(self.type))
         
     def overwrite(self,value):
     	self.value.value = value
@@ -121,6 +123,18 @@ class std_branch(branch):
             ROOT.AddressOf(self.value,'value'),
             self.name+'/'+std_branch.lookup[self.type]
             )
+           
+class auto_branch(branch):
+    def __init__(self,name,mode,type_):
+        initialized = False
+        for branch_type in branch.__subclasses__():
+            if branch_type is auto_branch: continue
+            try:
+                self.__class__ = branch_type
+                branch_type.__init__(self,name,mode,type_)
+                initialized = True
+            except TypeError: pass
+        if not initialized: raise TypeError('Unable to auto-initialize branch type {0}'.format(type_)) 
 #class
 
 #class stub(branch):

@@ -1,6 +1,6 @@
 import ROOT
 ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 2001;")
-from common.branches import vector_branch, std_branch
+from common.branches import auto_branch
 
 class pchain():
 
@@ -54,8 +54,7 @@ class pchain():
             for leaf in tree.GetListOfLeaves():
                 type_ = leaf.GetTypeName()
                 name = leaf.GetName()
-                if type_.startswith('vector'): self.branches[name] = vector_branch(name,'r',type_)
-                else: self.branches[name] = std_branch(name,'r',type_)
+                self.branches[name] = auto_branch(name,'r',type_)
                 self.branches[name].chain = self.chain
         tfile.Close()
         self.chain.SetBranchStatus('*',0)

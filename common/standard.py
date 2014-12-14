@@ -236,9 +236,18 @@ class skim(root_result):
         self.tree = ROOT.TTree(self.pchain().GetName(),self.pchain().GetTitle())
         self.root_output.add_result(self.tree)
 
-        for branch in [branch for branch in self.pchain.branches.values() if 'k' in branch.mode or self.keep]:
+        self.created_branches = {}
+        
+        for event_function in self.analysis.event_functions:
+            for branch in [branch_ for branch_ in event_function.branches if 'w' in branch.mode]:
+                self.created_branches[branch.name] = branch
+
+        for branch in [branch for branch in self.pchain.branches.values() if 'k' in branch.mode or self.keep) and branch.name not in self.create_branches]:
             branch.read(self.pchain.chain)
             #print 'keeping branch {0}'.format(branch.name)
+            branch.write(self.tree)
+            
+        for branch in self.created_branches:
             branch.write(self.tree)
     """
         for branch_name in sorted(self.analysis.keep_branches):
@@ -289,8 +298,8 @@ class skim(root_result):
         #return
 
         self.pchain.get_entry(event.__entry__)
-        #for branch in self.created_branches:
-        #    branch.payload = getattr(event,branch.name)
+        for branch in self.created_branches.values():
+            branch.payload = getattr(event,branch.name)
             
         self.tree.Fill()
 
