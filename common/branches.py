@@ -55,7 +55,9 @@ class vector_branch(branch):
     def __init__(self,name,mode,type_):
         super(vector_branch,self).__init__(name,mode)
         self.type = type_
-        try: self.value = getattr(ROOT,self.type)()
+        try:
+            if not self.type.startswith('vector'): raise AttributeError 
+            self.value = getattr(ROOT,self.type)()
         except AttributeError: raise TypeError('Type {0} not allowed for vector_branch'.format(self.type))
     #def generate_dictionary(self):
     #    generate_dictionary(self.type,'vector')
