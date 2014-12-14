@@ -239,7 +239,7 @@ class skim(root_result):
         self.created_branches = {}
         
         for event_function in self.analysis.event_functions:
-            for branch in [branch_ for branch_ in event_function.branches if 'w' in branch.mode]:
+            for branch in [branch_ for branch_ in event_function.branches if 'w' in branch_.mode]:
                 self.created_branches[branch.name] = branch
 
         for branch in [branch for branch in self.pchain.branches.values() if ('k' in branch.mode or self.keep) and branch.name not in self.create_branches]:
