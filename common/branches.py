@@ -66,7 +66,7 @@ class vector_branch(branch):
         self.value = getattr(ROOT,self.type)()
         self.chain.SetBranchAddress(self.name,ROOT.AddressOf(self.value))
 
-    def write(self,chain): pass
+    def write(self,chain):
         chain.Branch(
             self.name,
             ROOT.AddressOf(self.value),
