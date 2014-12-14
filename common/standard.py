@@ -239,7 +239,7 @@ class skim(root_result):
 
         for branch in [branch for branch in self.pchain.branches.values() if 'k' in branch.mode or self.keep]:
             branch.read(self.pchain.chain)
-            print 'keeping branch {0}'.format(branch.name)
+            #print 'keeping branch {0}'.format(branch.name)
             branch.write(self.tree)
     """
         for branch_name in sorted(self.analysis.keep_branches):
