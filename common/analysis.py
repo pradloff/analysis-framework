@@ -1,37 +1,100 @@
 from pchain import pchain
 from common.standard import in_grl, skim, cutflow, compute_mc_weight
-from common.functions import EventBreak, output_base
+from common.functions import EventBreak
+from common.commandline import arg
+import commandline
+from common.event import event_object
+import os,sys,shutil,time,code
 
-class AnalysisLocked(RuntimeError):
-    def __init__(self,message='Analysis locked'):
-        super(AnalysisLocked, self).__init__(message)
-        self.message = message
 
-class AnalysisUnlocked(RuntimeError):
-    def __init__(self,message='Analysis unlocked'):
-        super(AnalysisUnlocked, self).__init__(message)
-        self.message = message
-        
 class analysis():
+    @commandline.commandline(
+        "analysis",
+        usage = arg('-u',action='store_true',help='Show usage for functions and exit'),
+        tree = arg('-t',default=None,help='Name of TTree with event information',required=True),
+        files = arg('-f',default=[],nargs='+',help='Input file(s) to analyze.',required=True),
+        stream = arg('-s',help='Name of output data stream',required=True),
+        dir = arg('-d',help='Name of output directory'),
+        start = arg('--start',type=int,help='Entry to start processing'),
+        entries = arg('-n',type=int,help='Number of entries to process'),
+        process = arg('-p',nargs=2,type=int,help='Process number of process'),
+        interactive = arg('-i',action='store_true',help='Allows inspection of event after event functions'),
+        )
+    def __init__(
+        self,
+        usage=False,
+        interactive=False,
+        tree=None,
+        files=None,
+        stream=None,
+        dir='.',
+        start=0,
+        entries=None,
+        process=None,
+        ):
+        
+        self.interactive = interactive
 
-    def __init__(self,tree_name,files,stream_name,output_dir):
-    
-        self.tree_name = tree_name
+        if usage:
+            self.usage = True
+            commandline.USAGE = True
+        else: self.usage = False
+        
+        self.stream = stream
+
+        if process is not None:
+            self.process = process[0]
+            self.processes = process[1]
+            #print self.process, 'of', self.processes
+            self.dir = '/'.join([dir,str(self.process)])
+        else: 
+            self.dir = dir
+            self.process = None        
+
+        if not os.path.exists(self.dir):
+            try: os.makedirs(self.dir)
+            except OSError as error:
+                if error.errno != 17: raise
+     
+        if self.process is not None:
+            #can't interact with multi-processed analyses
+            self.interactive = False
+            #write stdout to log file
+            self.logger_file = open('/'.join([self.dir,'log.txt']),'w+',0)
+            sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+            os.dup2(self.logger_file.fileno(),sys.stdout.fileno())
+            #write stderr to error file
+            self.error_file = open('/'.join([self.dir,'error.txt']),'w+',0)
+            sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
+            os.dup2(self.error_file.fileno(),sys.stderr.fileno())
+        else:  
+            self.error_file = None
+            self.logger_file = None
+            self.process = 0
+            self.processes = 1
+            
+        self.tree = tree
         self.files = files
-        self.pchain = pchain(self.tree_name)
-        self.pchain.add_files(self.files)
-
-        self.stream_name = stream_name
-        self.output_dir = output_dir
-    
+        self.pchain = pchain(self.tree)
+        self.pchain.add_file(*self.files)
+        
+        entries = min([opt for opt in [entries,self.pchain.get_entries()-start] if opt is not None])
+        ranges = [[start+i*(entries/self.processes),start+(i+1)*(entries/self.processes)] for i in range(self.processes)]
+        ranges[-1][-1] = start+entries
+        self.start,self.end = ranges[self.process]
+        
         self.event_functions = []
         self.result_functions = []
         self.meta_result_functions = []
+        
+        #entries = min([int(entries),self.pchain.get_entries()])
+        #else: entries = analysis_instance.pchain.get_entries()
+        #print tree
 
         #self.required_branches = []
         #self.create_branches = {}
         #self.keep_branches = []
-        #self.break_exceptions = []
+        self.break_exceptions = []
 
         #self.files = files
         #self.tree = tree
@@ -42,39 +105,96 @@ class analysis():
         #self.keep_all = False
     
         self.outputs = set([])
-        self.closed = False
-        
-    def close(self):
-        if not self.closed:
-            self.add_standard_functions()
-            for event_function in event_functions:
-                event_function.set_analysis(self)
-                self.break_exceptions += event_function.break_exceptions
+        #self.closed = False
+    
+    def setup(self):
+        self.add_standard_functions()
+        if self.usage: sys.exit(1)
+        for event_function in self.event_functions:
+            event_function.analysis = self
+            event_function.request_branches()
+            event_function.setup()
+            self.break_exceptions += event_function.break_exceptions
+        for result_function in self.result_functions:
+            result_function.analysis = self
+            result_function.setup()
+            for output in result_function.outputs:
+                self.outputs.add(output)
+                #print output
+        for meta_result_function in self.meta_result_functions:
+            meta_result_function.analysis = self
+            meta_result_function.setup()
+            
+    def run(self):
+
+        print 'processing entries {0} to {1}'.format(self.start,self.end)       
+
+        milestone = 0.
+        time_start = time.time()
+        entry=0
+        done = 0.
+        rate = 0.
+
+        break_exceptions = tuple(self.break_exceptions)
+
+        for entry in xrange(self.start,self.end):
+            #Create new event object (basically just a namespace)
+            event = event_object()
+            event.__entry__ = entry
+            self.pchain.set_entry(entry)
+            for event_function in self.event_functions:
+                try: event_function(event)
+                except break_exceptions as e:
+                    event.__break__ = e
+                    break
             for result_function in self.result_functions:
-                result_function.set_analysis(self)
-                if result_function.output is not None: self.outputs.add(result_function.output)
-            for meta_result_function in self.meta_result_functions:
-                meta_result_function.set_analysis(self)
-                if meta_result_function.output is not None: self.outputs.add(meta_result_function.output)            
-            self.setup_chain()
-            self.closed = True
-        else: raise AnalysisLocked()
+                #Call result function (does not necessarily respect event.__break__, must be implemented on case by case basis in __call__ of result function)
+                result_function(event)
+            if self.interactive: code.interact('Entry: {0}'.format(entry),local={'event':event,'analysis':self})
+            rate = (entry-self.start)/(time.time()-time_start)
+            done = float(entry-self.start+1)/(self.end-self.start)*100.
+    
+            if done>milestone:
+                milestone+=10.
+                print '{0}% complete, {1} Hz'.format(round(done,2),round(rate,2))
+                if self.error_file: self.error_file.flush()
+                if self.logger_file: self.logger_file.flush()
+
+        print '{0}% complete, {1} Hz'.format(round(done,2), round(rate,2))
+    
+    def close(self):
+        for output in self.outputs: output.close()
+
+
+        if self.error_file: self.error_file.flush()
+        if self.logger_file: self.logger_file.flush()
+        sys.exit(0)
+
         
+    """ 
+    def close(self):
+        #if not self.closed:
+        self.add_standard_functions()
+        for event_function in event_functions:
+            event_function.set_analysis(self)
+        for result_function in self.result_functions:
+            result_function.set_analysis(self)
+            if result_function.output is not None: self.outputs.add(result_function.output)
+        for meta_result_function in self.meta_result_functions:
+            meta_result_function.set_analysis(self)
+            if meta_result_function.output is not None: self.outputs.add(meta_result_function.output)            
+            #self.setup_chain()
+            #self.closed = True
+        #else: raise AnalysisLocked()
+    """ 
     def add_event_function(self,*event_functions):
         self.event_functions += event_functions
-
 	
     def add_result_function(self,*result_functions):
         self.result_functions += result_functions
-        #for result_function in self.result_functions:
-            #print result_function,result_function.outputs
-            #self.outputs += result_function.outputs
 
     def add_meta_result_function(self,*meta_result_functions):
         self.meta_result_functions += result_functions
-        #for meta_result_function in self.meta_result_functions:
-        #    #print meta_result_function,meta_result_function.outputs
-        #    self.outputs += meta_result_function.outputs
                 
     def add_file(self,*files):
         for file_ in files:
@@ -82,11 +202,10 @@ class analysis():
             self.files.append(file_)
         
     def add_standard_functions(self):
-        #if self.grl: self.event_functions = [in_grl(self.grl)]+self.event_functions
+        print 'add standard functions'
         self.event_functions = [compute_mc_weight()]+self.event_functions
-        self.add_result_function(cutflow(),skim())
-        
-        
+        self.add_result_function(cutflow(),skim())  
+    """ 
     def setup_chain(self):
 
         for event_function in self.event_functions:
@@ -101,7 +220,8 @@ class analysis():
                 self.keep_branches.append(branch_name)
         self.pchain.request_branches(self.required_branches)
         self.pchain.request_branches(self.keep_branches)
-
+    """
+"""
 import os
 import sys
 import ROOT
@@ -223,8 +343,8 @@ class analyze_slice():
                 #Call event function
                 try: event_function_call(event)
                 except break_exceptions as e:
-			event.__break__ = e
-			break
+                    event.__break__ = e
+                    break
                 #Increment stop count (used in cutflow)
                 #event.__stop__+= 1
             for result_function_call in result_function_calls:
@@ -274,3 +394,5 @@ class analyze_slice():
             self.error_file.flush()
             self.error_file.close()
         sys.exit(self.exitcode)
+        
+"""

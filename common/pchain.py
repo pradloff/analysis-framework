@@ -22,7 +22,10 @@ class pchain():
     def get_entries(self):
         return self.chain.GetEntries()
 
-    def add_files(self,files):
+    def get_entry(self,entry):
+        self.chain.GetEntry(entry)
+		
+    def add_file(self,*files):
         for f in files:
             self.validate_file(f)
             self.files.append(f)
@@ -51,15 +54,22 @@ class pchain():
             for leaf in tree.GetListOfLeaves():
                 type_ = leaf.GetTypeName()
                 name = leaf.GetName()
-                if type_.startswith('vector'): self.branches[name] = vector_branch(name,type_,self.chain)
-                else: self.branches[name] = std_branch(name,type_,self.chain)
+                if type_.startswith('vector'): self.branches[name] = vector_branch(name,'r',type_)
+                else: self.branches[name] = std_branch(name,'r',type_)
+                self.branches[name].chain = self.chain
         tfile.Close()
+        self.chain.SetBranchStatus('*',0)
 
     def request_branch(self,branch_name):
-        self.branches[branch_name].read()
+        #self.branches[branch_name].read()
+        try: branch = self.branches[branch_name]
+        except KeyError: raise AttributeError('No branch named {0} found')
+        branch.read(self.chain)
+        self.chain.SetBranchStatus(branch.name,1)
+        return branch
 
-    def request_branches(self,branch_names):
-        for branch_name in branch_names: self.request_branch(branch_name)
+    #def request_branches(self,branch_names):
+    #    for branch_name in branch_names: self.request_branch(branch_name)
 
     def set_entry(self,entry):
         self.current_entry = self().LoadTree(entry)
@@ -72,10 +82,10 @@ class pchain():
             #for branch_name,branch in self.branches.items():
             #    branch.tbranch = self().GetBranch(branch_name)
         
-    def get_branches(self,event,branch_names):
-        for branch_name in branch_names:
-            if branch_name not in self.branches: raise KeyError('Unknown branch {0}'.format(branch_name))
-            branch = self.branches[branch_name]
-            branch.get_entry(self.current_entry)
-            event.__dict__[branch_name] = branch.get_value()
+    #def get_branches(self,event,branch_names):
+    #    for branch_name in branch_names:
+    #        if branch_name not in self.branches: raise KeyError('Unknown branch {0}'.format(branch_name))
+    #        branch = self.branches[branch_name]
+    #        branch.update(self.current_entry)
+    #        event.__dict__[branch_name] = branch.value
             

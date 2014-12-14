@@ -1,7 +1,147 @@
 #!/usr/bin/env python
+import subprocess,os,time,sys,tempfile
+
+class watcher():
+    def __init__(self,directory,child,prefix):
+        self.directory = directory
+        self.error = '/'.join([directory,'error.txt'])
+        self.logger = '/'.join([directory,'log.txt'])
+        self.child = child
+        self.prefix = prefix
+
+        self.error_file = None
+        self.logger_file = None
+
+    def poll(self):
+        if all([
+            self.error_file is None,
+            os.path.exists(self.error)
+            ]): self.error_file = open(self.error,'r+')
+        if all([
+            self.logger_file is None,
+            os.path.exists(self.logger)
+            ]): self.logger_file = open(self.logger,'r+')
+
+        exitcode = self.child.poll()
+        error = ''
+        logger = ''
+
+        if self.error_file: error = self.error_file.read()
+        if self.logger_file: logger = self.logger_file.read()
+
+        if error: error = self.prefix+error.replace('\n','\n'+' '*len(self.prefix))
+        if logger: logger = self.prefix+logger.replace('\n','\n'+' '*len(self.prefix))
+
+        return error,logger,exitcode    
+
+    def kill(self):
+        try: self.child.kill()
+        except OSError: pass
+        if self.error_file: self.error_file.close()
+        if self.logger_file: self.logger_file.close()
 
 if __name__ == '__main__':
 
+    from common.commandline import parser, get_arg_groups
+    
+    parser = parser(prog="analyze.py")
+
+    parser.add_argument('-m','--module',dest='module',required=True,help='Module containing analysis class.')
+    parser.add_argument('-a','--analysis',dest='analysis',required=True,help='Name of analysis to use.')
+    parser.add_argument('-p',dest='processes',default=1,type=int,help='Number of processes to use')  
+    arg_groups = get_arg_groups()
+
+    args = parser.parse_args(arg_groups[''])
+
+    analysis_args = arg_groups.get('analysis',[])
+    
+    if args.processes>1:
+        while True:
+            try:
+                i = analysis_args.index('-p')
+                j = ([index for index in range(i+1,len(analysis_args)) if analysis_args[index].startswith('-') and not analysis_args[index][1].isdigit()]+[None])[0]
+                if j is not None: del analysis_args[i:j]
+                else: del analysis_args[i:]
+            except ValueError: break
+
+    try:
+        analysis = __import__(
+            args.module,
+            globals(),
+            locals(),
+            [args.analysis]
+            ).__dict__[args.analysis]()
+    except KeyError: raise ImportError('Could not import analysis "{0}" from module "{1}"'.format(args.analysis,args.module))
+
+    analysis.setup()
+
+    if args.processes>1:
+        #start and monitor processes
+        del arg_groups['']
+        watchers = []
+        exitcodes = []
+        finished = []
+        
+        tempdir = tempfile.mkdtemp()
+        try: 
+            i = analysis_args.index('-d')
+            del analysis_args[i:i+2]
+        except ValueError: pass
+        finally: analysis_args += ['-d',tempdir]
+        for process in range(args.processes):
+            try:
+                i = analysis_args.index('-p')
+                del analysis_args[i:i+3]
+            except ValueError: pass
+            finally: analysis_args += ['-p',str(process),str(args.processes)]
+            run = ' - '.join(['analyze.py -m {0} -a {1}'.format(args.module,args.analysis)]+[
+                ' '.join([prog]+[arg for arg in arg_groups[prog]]) for prog in arg_groups
+                ])
+            #print run
+            watchers.append(watcher(
+                '/'.join([tempdir,str(process)]),
+                subprocess.Popen(run.split()),
+                'Process {0}: '.format(process),
+                ))
+            finished.append(False)
+                
+        while True:
+            try:
+                time.sleep(1)
+                for process_number,watcher in enumerate(watchers):
+                    logger,error,exitcode = watcher.poll()
+                    if logger: print logger.strip()
+                    if error: print error.strip()
+                    if exitcode is not None and not finished[process_number]:
+                        if exitcode: print 'Process {0} failed'.format(process_number)
+                        else: print 'Process {0} finished successfully'.format(process_number)
+                        exitcodes.append(exitcode)
+                        finished[process_number]=True
+                if all(finished): break
+
+            except KeyboardInterrupt:
+                for watcher in watchers:
+                    watcher.kill()
+                raise
+
+        if any(exitcodes) or not all(finished):
+            print 'Abnormal exit in at least one process, terminating'
+            sys.exit(1)
+            
+        for output in analysis.outputs:
+            output.merge(['/'.join([tempdir,str(process)]) for process in range(args.processes)])
+    #merge results
+    else: 
+        #run and close analysis
+        analysis.run()
+        analysis.close()
+
+
+
+def run(analysis,start,end):
+    pass
+    
+"""
     import tempfile
     import sys
     from common.functions import parser
@@ -247,21 +387,7 @@ def analyze(
         #print output.name
     	output.merge(directories)
     
-    """
-    from helper import root_quiet
-    with root_quiet(filters=["\[TFile::Cp\]"]):
-        if num_processes>1:
-            merger = ROOT.TFileMerger()
-            if os.path.exists(full_output): os.remove(full_output)
-            merger.OutputFile(full_output)
-            for result in results:
-                merger.AddFile(directory+'/'+result)
-            merger.Merge()
-        else:
-            shutil.move(directory+'/'+results[0],full_output)
 
-    print '{0} created'.format(full_output)
-	"""
 if __name__ == '__main__':
 
     files = []
@@ -293,3 +419,4 @@ if __name__ == '__main__':
         #args.KEEP,
         help,
         )
+"""

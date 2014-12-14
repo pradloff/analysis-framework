@@ -19,76 +19,107 @@ def generate_wrap(name):
    	return getattr(ROOT,'_'+name)()
 
 class branch(object):
-    def __init__(self,name,type_,chain):
+    def __init__(self,name,mode):
         self.name = name
-        self.type = type_
-        self.chain = chain
-    
+        self.mode = mode
+        self.open = False
+        
     @property
     def tbranch(self):
     	return self.chain.GetBranch(self.name)
-        
+    
     def generate_dictionary(self): pass
 
-    def link(self,pchain): raise NotImplementedError
+    def read_link(self): raise NotImplementedError
 
-    def get_entry(self,entry): self.tbranch.GetEntry(entry)
-
-    def read(self):
+    def read(self,chain):
+    	if 'r' not in self.mode: raise RuntimeError('Branch {0} not open for reading'.format(self.name))
+    	self.chain = chain
        	#self.generate_dictionary()
         self.chain.SetBranchStatus(self.name,1)
         self.read_link()
+        self.open = True
+        
+    def update(self,entry): 
+        if self.open: self.tbranch.GetEntry(entry)
+        else: raise RuntimeError('Branch {0} not open for reading'.format(self.name))
+        
+	def write_link(self,chain): raise NotImplementedError
 
-	def write_link(self):
-		pass
-
-	def write(self):
+	def write(self,chain):
+		if 'w' not in self.mode: raise RuntimeError('Branch not open for writing'.format(self.name))
+		self.write_link(chain)
 		pass
 		
 class vector_branch(branch):
-    def __init__(self,name,type_,chain):
-        super(vector_branch,self).__init__(name,type_,chain)
-        
-    def generate_dictionary(self):
-        generate_dictionary(self.type,'vector')
+    def __init__(self,name,mode,type_):
+        super(vector_branch,self).__init__(name,mode)
+        self.type = type_
+    #def generate_dictionary(self):
+    #    generate_dictionary(self.type,'vector')
     
     def overwrite(self,values):
     	self.value.clear()
     	for value in values: self.value.push_back(value)
     
-    def read_link(self):
+    def read_link(self,):
         self.value = getattr(ROOT,self.type)()
         self.chain.SetBranchAddress(self.name,ROOT.AddressOf(self.value))
 
-    def get_value(self): return self.value
+    def write(self,chain): pass
+        chain.Branch(
+            self.name,
+            ROOT.AddressOf(self.value),
+            )
+            
+    @property
+    def payload(self): return self.value
+
+    @payload.setter
+    def payload(self,value):
+        if 'r' in self.mode: raise RuntimeError('Value of branch {0} cannot be modified, mode {1}'.format(self.name,self.mode))
+        self.value.clear()
+        for value in values: self.value.push_back(value)
+
+    #def get_value(self): return self.value
 
 class std_branch(branch):
 
-    #lookup = {
-    #    'Char_t':'i',
-    #    'Int_t':'i',
-    #    'Bool_t':'i',
-    #    'UInt_t':'i',
-    #    'Long64_t':'l',
-    #    'Float_t':'f',
-    #    'Double_t':'d',
-    #    }
+    lookup = {
+        'Char_t':'i',
+        'Int_t':'i',
+        'Bool_t':'i',
+        'UInt_t':'i',
+        'Long64_t':'l',
+        'Float_t':'f',
+        'Double_t':'d',
+        }
 
-    def __init__(self,name,type_,chain):
-        super(std_branch,self).__init__(name,type_,chain)
-         
-         
+    def __init__(self,name,mode,type_):
+        super(std_branch,self).__init__(name,mode)
+        self.type = type_
+        
     def overwrite(self,value):
     	self.value.value = value
     	       
     def read_link(self):
-        #if self.type not in std_branch.lookup: raise TypeError('Unknown branch type {0}'.format(self.type))
-        #self.value = array(std_branch.lookup[self.type],[0])
         self.value = generate_wrap(self.type)
         self.chain.SetBranchAddress(self.name,ROOT.AddressOf(self.value,'value'))
 
-    def get_value(self): return self.value.value
+    @property
+    def payload(self): return self.value.value
 
+    @payload.setter
+    def payload(self,value):
+        if 'r' in self.mode: raise RuntimeError('Value of branch {0} cannot be modified, mode {1}'.format(self.name,self.mode))
+        self.value.value = value
+        
+    def write(self,chain):
+        chain.Branch(
+            self.name,
+            ROOT.AddressOf(self.value,'value'),
+            self.name+'/'+std_branch.lookup[self.type]
+            )
 #class
 
 #class stub(branch):

@@ -1,12 +1,4 @@
-import ROOT
-from copy import copy
-import inspect
-import argparse
-import sys
-import textwrap
-import itertools
-import types
-
+"""
 class parser(argparse.ArgumentParser):
     def error(self,message):
         sys.stderr.write('error: {0}\n'.format(message))
@@ -27,10 +19,10 @@ class InstantiationError(TypeError):
 
     def __str__(self):
         return 'InstantiationError: '+self.msg
-
+"""
 class EventBreak(Exception):
     pass
-
+"""
 class arg():
     def __init__(self, default, required=False, help=''):
         self.value = default
@@ -107,7 +99,7 @@ class function_meta(type):
             cls.__init__=__init__
             #print dct
         super(function_meta,cls).__init__(name, bases, dct)
-
+"""
 import cPickle
 import code
 
@@ -116,7 +108,6 @@ def memoize(func):
     def wrapper(*args,**kwargs):
         key = cPickle.dumps((args,kwargs))
         if key not in cache:
-            #print 'storing'
             result = func(*args,**kwargs)
             cache[key] = result
         return cache[key]
@@ -127,60 +118,75 @@ class memo_meta(type):
     def __call__(cls,*args,**kwargs):
         return super(memo_meta,cls).__call__(*args,**kwargs)
 
-class output_base(base):
+class output_base(object):
     __metaclass__ = memo_meta
-    def __init__(self,file_name):
-        self.file_name = file_name
-        self.open()
-    def open(self): raise NotImplementedError
-    def merge(self,directories): raise NotImplementedError
-    def close(self): raise NotImplementedError
+    def __init__(self,directory,name):
+        self.directory = directory
+        self.name = name
+        self.path = '/'.join([directory,name])
+    def setup(self,directory,stream): pass
 
-#from common.analysis import AnalysisUnlocked
+class function(object):
+    @property
+    def analysis(self):
+        if hasattr(self,'_analysis'): return self._analysis
+        raise RuntimeError('Analysis not set for function {0}'.format(self))
 
-class function(base):
-    __metaclass__ = function_meta
-    def __init__(self): pass
-    def __getattribute__(self,attr):
-        if attr not in [
-        	'__dict__',
-            '__deferred_init__',
-            '__class__',
-            ]:
-            setattr(self.__class__, '__getattribute__', types.MethodType(object.__getattribute__,self))
-            self.__deferred_init__(*self.__dict__['__args'],**self.__dict__['__kwargs'])
+    @analysis.setter
+    def analysis(self,analysis):
+        self._analysis = analysis
 
-        return super(function, self).__getattribute__(attr)
+#class function(object):
+#	pass
+"""
+class function(object):
+    @property
+    def analysis(self):
+    	if hasattr(self,'_analysis'): return self._analysis
+    	raise RuntimeError('Analysis not set for function {0}'.format(self))
         
-    def set_analysis(self,analysis):
-        self.analysis = analysis
-    def get_analysis(self):
-        analysis = getattr(self,'analysis',None)
-        if analysis is None: raise AnalysisUnlocked()
-        
-class event_function(function,base):
+	#@analysis.setter
+	#def analysis(self,analysis): self._analysis = analysis
+"""    
+class event_function(function):
     def __init__(self):
-        self.required_branches = []
-        self.keep_branches = []
-        self.create_branches = {}
+        self.branches = []
         self.break_exceptions = []
-        
-    def __call__(self,event):
-        return
 
-class result_function(function,base):
+    def setup(self): pass
+
+    def request_branches(self):
+        #_branches = []
+        _read_branches = []
+        for branch in self.branches:
+            mode = branch.mode
+            if 'r' in branch.mode:
+                try:
+                    #replace stub branch with readable branch
+                    branch = self.analysis.pchain.request_branch(branch.name)
+                    branch.mode = mode
+                    _read_branches.append(branch)
+                except AttributeError as e:
+                    if not 'u' in mode: raise
+                    branch.mode = mode.replace('r','')
+       	#self.branches = _branches #all branches
+       	self.read_branches = _read_branches #open for reading branches
+            
+    def __call__(self,event):
+        for branch in self.read_branches:
+            branch.update(event.__entry__)
+            event.__dict__[branch.name] = branch.payload
+        #self.analyis.pchain.get_branches(event,[branch for branch in self.branches if 'r' in branch.mode])
+
+class result_function(function):
     def __init__(self):
-        self.setup_output()
-        
-    def setup_output(self): raise NotImplementedError
+        self.outputs = []
+    #def setup(self):
+    #   for output in self.outputs: output.setup()
+    #def setup_output(self): 
+    #    for output in self.outputs: output.setup(self.analysis.dir,self.analysis.stream)
+    def __call__(self,event): pass
     
-    def __call__(self,event):
-        return
-
-class meta_result_function(function,base):
-    def __init__(self,output):
-        #self.results = {}
-        self.output = output
-
-    def __call__(self,files):
-        return
+class meta_result_function(function):
+    def setup_output(self): pass
+    def __call__(self,files): pass
