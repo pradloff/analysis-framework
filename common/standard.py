@@ -219,12 +219,15 @@ class skim(root_result):
     @commandline(
         "skim",
         keep = arg('-k',action='store_true',help='Keep all branches from original tree'),
+        branches = arg('-b',nargs='+',help='Branches to keep from original tree'),
         )
     def __init__(
         self,
         keep = False,
+        branches = [],
         ):
         self.keep = keep
+        self.branches = branches
         super(skim,self).__init__()
 
     #def __init__(self):
@@ -242,14 +245,27 @@ class skim(root_result):
             for branch in [branch_ for branch_ in event_function.branches if 'w' in branch_.mode]:
                 self.created_branches[branch.name] = branch
 
-        for branch in [branch for branch in self.pchain.branches.values() if ('k' in branch.mode or self.keep) and branch.name not in self.created_branches]:
+        if self.keep:
+            for branch_name in self.pchain.branch_types:
+                if branch_name in self.pchain.branches:
+                    branch = self.pchain.branches[branch_name]
+                    if 'k' not in branch.mode: self.mode += 'k'
+                else: self.pchain.request_branch(branch(branch_name,'rk')
+
+        for branch_name in self.branches:
+            if branch_name in self.pchain.branches:
+                branch = self.pchain.branches[branch_name]
+                if 'k' not in branch.mode: self.mode += 'k'
+            else: self.pchain.request_branch(branch(branch_name,'rk')     
+
+        for branch in [branch for branch in self.pchain.branches.values() if 'k' in branch.mode and branch.name not in self.created_branches]:
             branch.read(self.pchain.chain)
             #print 'keeping branch {0}'.format(branch.name)
             #print branch.name,type(branch)
             branch.write(self.tree)
             
         for branch in self.created_branches:
-            branch.write(self.tree)
+            branch.write_link(self.tree)
     """
         for branch_name in sorted(self.analysis.keep_branches):
             if self.analysis.create_branches.get(branch_name): continue

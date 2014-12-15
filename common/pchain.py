@@ -12,6 +12,7 @@ class pchain():
         self.chain.SetCacheLearnEntries(10)
 
         self.branches = {}
+        self.branch_types = {}
         self.files = []
         self.current_file_number = -1
         self.first_entry_files = []
@@ -40,31 +41,38 @@ class pchain():
             not isinstance(tree,ROOT.TTree),
             ]): raise ValueError,'No matches for TTree "{0}" in file {1}.'.format(self.tree,f)
         if self.files:
-            branch_types = {}
-            for leaf in tree.GetListOfLeaves():
-                type_ = leaf.GetTypeName()
-                name = leaf.GetName()
-                d[name] = type_
-            for branch_name,branch in self.branches.items():
-                if any([
-                    branch_name not in branch_types,
-                    branch_types[branch_name] != branch.type,
-                    ]): raise RuntimeError('Mis-match data between original file {0} and appended file {1} in branch {2}'.format(self.files[0],f,branch_name))      
+            branch_types = dict((leaf.GetName(),leaf.GetTypeName()) for leaf in tree.GetListOfLeaves())
+            if branch_types != self.branch_types:
+                raise RuntimeError('Mis-match data between original file {0} and appended file {1} in branch {2}'.format(self.files[0],f,branch_name))
+            #for leaf in tree.GetListOfLeaves():
+            #    type_ = leaf.GetTypeName()
+            #    name = leaf.GetName()
+            #    branch_types[name] = type_
+            #for branch_name,branch in self.branches.items():
+            #    if any([
+            #        branch_name not in branch_types,
+            #        branch_types[branch_name] != branch.type,
+            #        ]): raise RuntimeError('Mis-match data between original file {0} and appended file {1} in branch {2}'.format(self.files[0],f,branch_name))      
         else:
-            for leaf in tree.GetListOfLeaves():
-                type_ = leaf.GetTypeName()
-                name = leaf.GetName()
-                self.branches[name] = auto_branch(name,'r',type_)
-                self.branches[name].chain = self.chain
+            self.branch_types = dict((leaf.GetName(),leaf.GetTypeName()) for leaf in tree.GetListOfLeaves())
+            #for leaf in tree.GetListOfLeaves():
+            #    type_ = leaf.GetTypeName()
+            #    name = leaf.GetName()
+            #    self.branches[name] = auto_branch(name,'r',type_)
+            #    self.branches[name].chain = self.chain
         tfile.Close()
         self.chain.SetBranchStatus('*',0)
 
-    def request_branch(self,branch_name):
+    def request_branch(self,branch):
         #self.branches[branch_name].read()
-        try: branch = self.branches[branch_name]
+        try: branch_type = self.branch_types[branch.name]
         except KeyError: raise AttributeError('No branch named {0} found')
+        branch = auto_branch(branch.name,branch.mode,branch_type)
+        #try: branch = self.branches[branch_name]
+        #except KeyError: raise AttributeError('No branch named {0} found')
         branch.read(self.chain)
         self.chain.SetBranchStatus(branch.name,1)
+        self.branches[branch.name] = branch
         return branch
 
     #def request_branches(self,branch_names):

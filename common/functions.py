@@ -163,8 +163,7 @@ class event_function(function):
             if 'r' in branch.mode:
                 try:
                     #replace stub branch with readable branch
-                    branch = self.analysis.pchain.request_branch(branch.name)
-                    branch.mode = mode
+                    branch = self.analysis.pchain.request_branch(branch)
                     _read_branches.append(branch)
                 except AttributeError as e:
                     if not 'u' in mode: raise

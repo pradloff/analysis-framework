@@ -66,11 +66,11 @@ class vector_branch(branch):
     	self.value.clear()
     	for value in values: self.value.push_back(value)
     
-    def read_link(self,):
+    def read_link(self):
         self.value = getattr(ROOT,self.type)()
         self.chain.SetBranchAddress(self.name,ROOT.AddressOf(self.value))
 
-    def write(self,chain):
+    def write_link(self,chain):
         chain.Branch(
             self.name,
             self.value,
@@ -119,7 +119,7 @@ class std_branch(branch):
         if 'r' in self.mode: raise RuntimeError('Value of branch {0} cannot be modified, mode {1}'.format(self.name,self.mode))
         self.value.value = value
         
-    def write(self,chain):
+    def write_link(self,chain):
         chain.Branch(
             self.name,
             ROOT.AddressOf(self.value,'value'),
