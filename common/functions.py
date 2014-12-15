@@ -150,6 +150,7 @@ class function(object):
 """    
 class event_function(function):
     def __init__(self):
+        super(event_function,self).__init__()
         self.branches = []
         self.break_exceptions = []
 
@@ -159,7 +160,6 @@ class event_function(function):
         #_branches = []
         _read_branches = []
         for branch in self.branches:
-            mode = branch.mode
             if 'r' in branch.mode:
                 try:
                     #replace stub branch with readable branch
@@ -168,6 +168,7 @@ class event_function(function):
                 except AttributeError as e:
                     if not 'u' in mode: raise
                     branch.mode = mode.replace('r','')
+                    if 'k'  in mode: branch.mode = branch.mode.replace('k','')
        	#self.branches = _branches #all branches
        	self.read_branches = _read_branches #open for reading branches
             
@@ -179,7 +180,9 @@ class event_function(function):
 
 class result_function(function):
     def __init__(self):
+        super(result_function,self).__init__()
         self.outputs = []
+    def setup(self): pass
     #def setup(self):
     #   for output in self.outputs: output.setup()
     #def setup_output(self): 
@@ -187,5 +190,5 @@ class result_function(function):
     def __call__(self,event): pass
     
 class meta_result_function(function):
-    def setup_output(self): pass
+    def setup(self): pass
     def __call__(self,files): pass
