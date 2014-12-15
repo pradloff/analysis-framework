@@ -43,13 +43,7 @@ class branch(object):
     def update(self,entry): 
         if self.open: self.tbranch.GetEntry(entry)
         else: raise RuntimeError('Branch {0} not open for reading'.format(self.name))
-        
-	def write_link(self,chain): raise NotImplementedError
 
-	def write(self,chain):
-		if 'w' not in self.mode: raise RuntimeError('Branch not open for writing'.format(self.name))
-		self.write_link(chain)
-		pass
 		
 class vector_branch(branch):
     def __init__(self,name,mode,type_):
@@ -70,7 +64,7 @@ class vector_branch(branch):
         self.value = getattr(ROOT,self.type)()
         self.chain.SetBranchAddress(self.name,ROOT.AddressOf(self.value))
 
-    def write_link(self,chain):
+    def write(self,chain):
         chain.Branch(
             self.name,
             self.value,
@@ -119,7 +113,7 @@ class std_branch(branch):
         if 'r' in self.mode: raise RuntimeError('Value of branch {0} cannot be modified, mode {1}'.format(self.name,self.mode))
         self.value.value = value
         
-    def write_link(self,chain):
+    def write(self,chain):
         chain.Branch(
             self.name,
             ROOT.AddressOf(self.value,'value'),
