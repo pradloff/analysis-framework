@@ -61,7 +61,7 @@ class vector_branch(branch):
     	for value in values: self.value.push_back(value)
     
     def read_link(self):
-        self.value = getattr(ROOT,self.type)()
+        #self.value = getattr(ROOT,self.type)()
         self.chain.SetBranchAddress(self.name,ROOT.AddressOf(self.value))
 
     def write(self,chain):
@@ -97,12 +97,12 @@ class std_branch(branch):
         super(std_branch,self).__init__(name,mode)
         self.type = type_
         if self.type not in std_branch.lookup: raise TypeError('Type {0} not allowed for std_branch'.format(self.type))
-        
+        self.value = generate_wrap(self.type)
+                
     def overwrite(self,value):
     	self.value.value = value
     	       
     def read_link(self):
-        self.value = generate_wrap(self.type)
         self.chain.SetBranchAddress(self.name,ROOT.AddressOf(self.value,'value'))
 
     @property
