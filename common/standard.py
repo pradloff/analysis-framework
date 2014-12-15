@@ -265,7 +265,7 @@ class skim(root_result):
             #print branch.name,type(branch)
             branch.write(self.tree)
             
-        for branch in self.created_branches:
+        for branch in self.created_branches.values():
             branch.write(self.tree)
     """
         for branch_name in sorted(self.analysis.keep_branches):
