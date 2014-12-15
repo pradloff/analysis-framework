@@ -7,7 +7,7 @@ from common.event import event_object
 import os,sys,shutil,time,code
 
 
-class analysis():
+class analysis(object):
     @commandline.commandline(
         "analysis",
         usage = arg('-u',action='store_true',help='Show usage for functions and exit'),
