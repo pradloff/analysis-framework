@@ -166,8 +166,8 @@ class event_function(function):
                     branch = self.analysis.pchain.request_branch(branch)
                     _read_branches.append(branch)
                 except AttributeError as e:
-                    if not 'u' in mode: raise
-                    branch.mode = mode.replace('r','')
+                    if not 'u' in branch.mode: raise
+                    branch.mode = branch.mode.replace('r','')
                     if 'k'  in mode: branch.mode = branch.mode.replace('k','')
        	#self.branches = _branches #all branches
        	self.read_branches = _read_branches #open for reading branches
