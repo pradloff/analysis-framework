@@ -1,6 +1,7 @@
 from xml.dom.minidom import parseString
 from common.functions import event_function, result_function, output_base
 from common.branches import branch
+import common.branches
 from common.commandline import commandline, arg
 from helper import root_quiet
 import ROOT,os
@@ -250,13 +251,13 @@ class skim(root_result):
                 if branch_name in self.pchain.branches:
                     branch = self.pchain.branches[branch_name]
                     if 'k' not in branch.mode: self.mode += 'k'
-                else: self.pchain.request_branch(branch(branch_name,'rk'))
+                else: self.pchain.request_branch(common.branches.branch(branch_name,'rk'))
 
         for branch_name in self.branches:
             if branch_name in self.pchain.branches:
                 branch = self.pchain.branches[branch_name]
                 if 'k' not in branch.mode: self.mode += 'k'
-            else: self.pchain.request_branch(branch(branch_name,'rk'))  
+            else: self.pchain.request_branch(common.branches.branch(branch_name,'rk'))  
 
         for branch in [branch for branch in self.pchain.branches.values() if 'k' in branch.mode and branch.name not in self.created_branches]:
             branch.read(self.pchain.chain)
