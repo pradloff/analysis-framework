@@ -185,7 +185,7 @@ class cutflow(root_result):
         if event.__break__.__class__ in self.break_exceptions: stop = self.break_exceptions[event.__break__.__class__]
         elif event.__break__ is False: stop = self.max
         else: raise RuntimeError('Invalid break exception: {0}'.format(event.__break__))
-        for i in range(1,stop):
+        for i in range(1,stop+1):
             self.cutflow.Fill(i-0.5)
             self.cutflow_weighted.Fill(i-0.5,event.__weight__)
 
