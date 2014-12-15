@@ -112,8 +112,8 @@ class analysis(object):
         if self.usage: sys.exit(1)
         for event_function in self.event_functions:
             event_function.analysis = self
-            event_function.request_branches()
             event_function.setup()
+            event_function.request_branches()
             self.break_exceptions += event_function.break_exceptions
         for result_function in self.result_functions:
             result_function.analysis = self

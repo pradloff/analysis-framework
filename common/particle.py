@@ -15,9 +15,9 @@ class particle():
 		self.__particle__ = __particle__
 
 	def create_particle(self):
-		if all([name in self.__properties__ for name in ['pt','eta','phi','e']]): self.set_pt_eta_phi_e(*[self.__properties__[name] for name in ['pt','eta','phi','e']])
+		if all([name in self.__properties__ for name in ['pt','eta','phi','E']]): self.set_pt_eta_phi_e(*[self.__properties__[name] for name in ['pt','eta','phi','E']])
 		elif all([name in self.__properties__ for name in ['pt','eta','phi','m']]): self.set_pt_eta_phi_m(*[self.__properties__[name] for name in ['pt','eta','phi','m']])
-		elif all([name in self.__properties__ for name in ['px','py','pz','e']]): self.set_px_py_pz_e(*[self.__properties__[name] for name in ['px','py','pz','e']])
+		elif all([name in self.__properties__ for name in ['px','py','pz','E']]): self.set_px_py_pz_e(*[self.__properties__[name] for name in ['px','py','pz','E']])
 		else: raise ValueError('particle could not be infered from properties')
 
 	def set_pt_eta_phi_e(self,pt,eta,phi,e):
