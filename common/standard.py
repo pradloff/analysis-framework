@@ -250,13 +250,13 @@ class skim(root_result):
             for branch_name in self.pchain.branch_types:
                 if branch_name in self.pchain.branches:
                     branch = self.pchain.branches[branch_name]
-                    if 'k' not in branch.mode: self.mode += 'k'
+                    if 'k' not in branch.mode: branch.mode += 'k'
                 else: self.pchain.request_branch(common.branches.branch(branch_name,'rk'))
 
         for branch_name in self.branches:
             if branch_name in self.pchain.branches:
                 branch = self.pchain.branches[branch_name]
-                if 'k' not in branch.mode: self.mode += 'k'
+                if 'k' not in branch.mode: branch.mode += 'k'
             else: self.pchain.request_branch(common.branches.branch(branch_name,'rk'))  
 
         for branch in [branch for branch in self.pchain.branches.values() if 'k' in branch.mode and branch.name not in self.created_branches]:
