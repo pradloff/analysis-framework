@@ -57,8 +57,8 @@ class vector_branch(branch):
     #    generate_dictionary(self.type,'vector')
     
     def overwrite(self,values):
-    	self.value.clear()
-    	for value in values: self.value.push_back(value)
+        self.value.clear()
+        for value in values: self.value.push_back(value)
     
     def read_link(self):
         #self.value = getattr(ROOT,self.type)()

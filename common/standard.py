@@ -317,7 +317,7 @@ class skim(root_result):
 
         self.pchain.get_entry(event.__entry__)
         for branch in self.created_branches.values():
-            branch.payload = getattr(event,branch.name)
+            branch.overwrite(getattr(event,branch.name))
             
         self.tree.Fill()
 
