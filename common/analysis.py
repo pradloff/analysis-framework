@@ -16,6 +16,7 @@ class analysis(object):
         stream = arg('-s',help='Name of output data stream',required=True),
         dir = arg('-d',help='Name of output directory'),
         start = arg('--start',type=int,help='Entry to start processing'),
+        jump = arg('--jump',type=int,help='Jump events by this number'),
         entries = arg('-n',type=int,help='Number of entries to process'),
         process = arg('-p',nargs=2,type=int,help='Process number of process'),
         interactive = arg('-i',action='store_true',help='Allows inspection of event after event functions'),
@@ -29,6 +30,7 @@ class analysis(object):
         stream=None,
         dir='.',
         start=0,
+        jump=1,
         entries=None,
         process=None,
         ):
@@ -82,6 +84,8 @@ class analysis(object):
         ranges = [[start+i*(entries/self.processes),start+(i+1)*(entries/self.processes)] for i in range(self.processes)]
         ranges[-1][-1] = start+entries
         self.start,self.end = ranges[self.process]
+        
+        self.jump = jump
         
         self.event_functions = []
         self.result_functions = []
@@ -137,7 +141,7 @@ class analysis(object):
 
         break_exceptions = tuple(self.break_exceptions)
 
-        for entry in xrange(self.start,self.end):
+        for entry in xrange(self.start,self.end,self.jump):
             #Create new event object (basically just a namespace)
             event = event_object()
             event.__entry__ = entry
