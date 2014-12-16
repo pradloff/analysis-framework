@@ -174,7 +174,7 @@ class event_function(function):
             
     def __call__(self,event):
         for branch in self.read_branches:
-            branch.update(event.__entry__)
+            branch.update(self.analysis.pchain.current_entry)
             event.__dict__[branch.name] = branch.payload
         #self.analyis.pchain.get_branches(event,[branch for branch in self.branches if 'r' in branch.mode])
 
