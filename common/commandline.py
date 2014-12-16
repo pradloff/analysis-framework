@@ -65,7 +65,7 @@ class commandline(object):
             if arg_name not in kwargs: kwargs[arg_name]=kwargs_spec[arg_name]
 
         for arg_name in self.commandline_args:
-            if arg_name not in kwargs_spec: raise CommandLineError('"{0}" not a kwarg of class {1}'.format(arg_name,c.__name__))
+            if arg_name not in kwargs_spec: raise CommandLineError('"{0}" not a kwarg of function {1}'.format(arg_name,f))
             self.commandline_args[arg_name].kwargs['default']=kwargs.get(arg_name,kwargs_spec[arg_name]) 
 
     def update_args(self,kwargs):
