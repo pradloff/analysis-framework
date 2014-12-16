@@ -42,6 +42,7 @@ class watcher():
 
 if __name__ == '__main__':
 
+    import common.commandline
     from common.commandline import parser, get_arg_groups
     
     parser = parser(prog="analyze.py")
@@ -49,9 +50,13 @@ if __name__ == '__main__':
     parser.add_argument('-m','--module',dest='module',required=True,help='Module containing analysis class.')
     parser.add_argument('-a','--analysis',dest='analysis',required=True,help='Name of analysis to use.')
     parser.add_argument('-p',dest='processes',default=1,type=int,help='Number of processes to use')  
+    parser.add_argument('-u',dest='usage',action='store_true',help='Show usage for analysis and functions, then exit')
+    
     arg_groups = get_arg_groups()
 
     args = parser.parse_args(arg_groups[''])
+
+    if args.usage: common.commandline.USAGE = True
 
     analysis_args = arg_groups.get('analysis',[])
     
