@@ -44,6 +44,7 @@ if __name__ == '__main__':
 
     import common.commandline
     from common.commandline import parser, get_arg_groups
+    import sys
     
     parser = parser(prog="analyze.py")
 
@@ -77,6 +78,8 @@ if __name__ == '__main__':
             [args.analysis]
             ).__dict__[args.analysis]()
     except KeyError: raise ImportError('Could not import analysis "{0}" from module "{1}"'.format(args.analysis,args.module))
+
+    if args.usage: sys.exit(1)
 
     analysis.setup()
 
