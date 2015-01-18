@@ -149,7 +149,8 @@ class cutflow(root_result):
             0,
             len(break_exceptions)+1,
             )
-            
+        self.cutflow.Sumw2()
+        
         self.cutflow_weighted = ROOT.TH1F(
             'cutflow_weighted',
             'cutflow_weighted',
@@ -157,7 +158,8 @@ class cutflow(root_result):
             0,
             len(break_exceptions)+1,
             )
-
+        self.cutflow_weighted.Sumw2()
+        
         self.root_output.add_result(self.cutflow)
         self.root_output.add_result(self.cutflow_weighted)      
         

@@ -65,6 +65,8 @@ class pchain():
 
     def request_branch(self,branch):
         #self.branches[branch_name].read()
+        try: return self.branches[branch.name]
+        except KeyError: pass
         try: branch_type = self.branch_types[branch.name]
         except KeyError: raise AttributeError('No branch named {0} found'.format(branch.name))
         branch = auto_branch(branch.name,branch.mode,branch_type)
