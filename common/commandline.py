@@ -10,7 +10,7 @@ USAGE=False
 @memoize
 def get_arg_groups():
     arg_groups = {}
-    for i,(k,g) in enumerate(itertools.groupby(sys.argv,lambda x:x==' - ')):
+    for i,(k,g) in enumerate(itertools.groupby(sys.argv,lambda x:x=='-')):
         if k: continue
         g=list(g)
         if i: name = g[0]
